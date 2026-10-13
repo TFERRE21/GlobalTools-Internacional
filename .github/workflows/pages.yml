@@ -91,6 +91,52 @@ jobs:
           fi
           grep -F 'Google AdSense' /tmp/privacy.html
           grep -F 'globaltoolsnow.com' /tmp/privacy.html
+
+          # Localized landing pages are distinct, canonical URLs with reciprocal hreflang.
+          curl -fsS http://127.0.0.1:3500/pt/ -o /tmp/home-pt.html
+          curl -fsS http://127.0.0.1:3500/es/ -o /tmp/home-es.html
+          curl -fsS http://127.0.0.1:3500/fr/ -o /tmp/home-fr.html
+          grep -F '<html lang="pt-BR">' /tmp/home-pt.html
+          grep -F 'rel="canonical" href="https://globaltoolsnow.com/pt/"' /tmp/home-pt.html
+          grep -F 'hreflang="x-default" href="https://globaltoolsnow.com/"' /tmp/home-fr.html
+          # High-intent tool pages must have translated content, canonical URLs and hreflang links.
+          curl -fsS http://127.0.0.1:3500/pt/tools/word-to-pdf.html -o /tmp/word-to-pdf-pt.html
+          curl -fsS http://127.0.0.1:3500/es/tools/pdf-to-word.html -o /tmp/pdf-to-word-es.html
+          curl -fsS http://127.0.0.1:3500/fr/tools/compress-pdf.html -o /tmp/compress-pdf-fr.html
+          grep -F '<html lang="pt-BR">' /tmp/word-to-pdf-pt.html
+          grep -F '<title>Word para PDF | GlobalTools</title>' /tmp/word-to-pdf-pt.html
+          grep -F 'href="https://globaltoolsnow.com/pt/tools/word-to-pdf.html"' /tmp/word-to-pdf-pt.html
+          grep -F 'Extrae el texto de un PDF' /tmp/pdf-to-word-es.html
+          grep -F 'La méthode actuelle ne réduit pas la résolution' /tmp/compress-pdf-fr.html
+          # Sitemap must be valid XML and list the localized routes with language alternates.
+          curl -fsS http://127.0.0.1:3500/sitemap.xml -o /tmp/sitemap.xml
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse("/tmp/sitemap.xml").getroot()
+          ns = {
+              "s": "http://www.sitemaps.org/schemas/sitemap/0.9",
+              "xhtml": "http://www.w3.org/1999/xhtml",
+          }
+          urls = root.findall("s:url", ns)
+          locs = [u.findtext("s:loc", namespaces=ns) for u in urls]
+          assert "https://globaltoolsnow.com/pt/" in locs
+          assert "https://globaltoolsnow.com/es/" in locs
+          assert "https://globaltoolsnow.com/fr/" in locs
+          for path in [
+              "pt/tools/word-to-pdf.html",
+              "es/tools/word-to-pdf.html",
+              "fr/tools/word-to-pdf.html",
+          ]:
+              assert "https://globaltoolsnow.com/" + path in locs, path
+          english_word = next(u for u in urls if u.findtext("s:loc", namespaces=ns) == "https://globaltoolsnow.com/tools/word-to-pdf.html")
+          alternates = {x.attrib["hreflang"]: x.attrib["href"] for x in english_word.findall("xhtml:link", ns)}
+          assert alternates.get("pt-BR") == "https://globaltoolsnow.com/pt/tools/word-to-pdf.html"
+          assert alternates.get("es") == "https://globaltoolsnow.com/es/tools/word-to-pdf.html"
+          assert alternates.get("fr") == "https://globaltoolsnow.com/fr/tools/word-to-pdf.html"
+          assert alternates.get("x-default") == "https://globaltoolsnow.com/tools/word-to-pdf.html"
+          assert len(urls) >= 160, len(urls)
+          print("Localized sitemap OK:", len(urls), "URLs")
+          PY
           curl -fsS http://127.0.0.1:3500/tools/compress-pdf.html -o /tmp/compress-pdf.html
           grep -F 'This tool re-saves a PDF using a browser-based PDF library.' /tmp/compress-pdf.html
           curl -fsS http://127.0.0.1:3500/account.html -o /tmp/account.html
