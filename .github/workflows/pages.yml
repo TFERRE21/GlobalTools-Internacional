@@ -41,6 +41,24 @@ jobs:
           curl -fsS http://127.0.0.1:3400/sitemap.xml -o /tmp/sitemap.xml
           grep -F "https://globaltools.example/tools/word-counter.html" /tmp/sitemap.xml
           curl -fsS http://127.0.0.1:3400/products/small-business-finance-dashboard.html | grep -F "https://globaltools.example/products/small-business-finance-dashboard.html"
+      - name: Smoke test public-domain fallback without environment variable
+        env:
+          PORT: 3402
+        run: |
+          env -u PUBLIC_SITE_URL PORT=3402 node server.js &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3402/robots.txt -o /tmp/robots-default.txt; then break; fi
+            sleep 1
+          done
+          grep -F "Sitemap: https://globaltoolsnow.com/sitemap.xml" /tmp/robots-default.txt
+          curl -fsS http://127.0.0.1:3402/sitemap.xml -o /tmp/sitemap-default.xml
+          grep -F "https://globaltoolsnow.com/tools/word-counter.html" /tmp/sitemap-default.xml
+          if grep -F "127.0.0.1" /tmp/sitemap-default.xml; then
+            echo "Internal localhost URLs must not appear in the public sitemap"
+            exit 1
+          fi
       - name: Smoke test production start command
         env:
           PORT: 3500
