@@ -3,8 +3,9 @@
 English-first international edition of GlobalTools, with free browser tools, business spreadsheets, finance dashboard subscriptions, multilingual navigation, and Stripe checkout in USD.
 
 ## Runtime
-- Node.js 18+
+- Node.js 20+
 - Start command: `npm start` (gateway plus core application server)
+- Container runtime: the included Dockerfile uses Node.js 20 and exposes port 3000.
 - Deploy to a Node.js VPS or container host; static-only hosting does not support the checkout/account APIs.
 
 ## Configuration
