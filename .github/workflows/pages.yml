@@ -82,12 +82,13 @@ jobs:
           grep -F 'adsbygoogle.js?client=ca-pub-6472882150880001' /tmp/store.html
           test "$(grep -o 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/store.html | wc -l)" -eq 1
           curl -fsS http://127.0.0.1:3500/contato.html -o /tmp/contact.html
+          curl -fsS http://127.0.0.1:3500/privacy.html -o /tmp/privacy.html
+          curl -fsS http://127.0.0.1:3500/refund.html -o /tmp/refund.html
           grep -F 'id="contactForm"' /tmp/contact.html
           if grep -E 'globaltools-international\.example|contato@.*\.example|OOLIVO' /tmp/contact.html /tmp/privacy.html /tmp/refund.html; then
             echo "Placeholder contact details or legacy brand found on public policy pages"
             exit 1
           fi
-          curl -fsS http://127.0.0.1:3500/privacy.html -o /tmp/privacy.html
           grep -F 'Google AdSense' /tmp/privacy.html
           grep -F 'globaltoolsnow.com' /tmp/privacy.html
           curl -fsS http://127.0.0.1:3500/tools/compress-pdf.html -o /tmp/compress-pdf.html
