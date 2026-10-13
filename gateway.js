@@ -336,7 +336,7 @@ function sendAccessEmail(email, password, plan, product, callback) {
     "<p style='font-size:12px;line-height:1.6;color:#7b8796;margin:9px 0 0'>This password is temporary. Change it from Settings after signing in.</p>" +
     "</td></tr>" +
     "<tr><td style='padding:22px 34px 30px;text-align:center'>" +
-    "<a href='https://globaltools-international.example/account.html' style='display:inline-block;padding:14px 25px;border-radius:10px;background:#21c879;color:#06140d;text-decoration:none;font-size:14px;font-weight:800'>Open GlobalTools Finance</a>" +
+    "<a href='" + (PUBLIC_SITE_URL || "http://localhost:3000") + "/account.html' style='display:inline-block;padding:14px 25px;border-radius:10px;background:#21c879;color:#06140d;text-decoration:none;font-size:14px;font-weight:800'>Open GlobalTools Finance</a>" +
     "</td></tr>" +
     "<tr><td style='padding:22px 34px;border-top:1px solid #edf0f3;background:#fbfcfd'>" +
     "<p style='margin:0;font-size:13px;line-height:1.6;color:#566273'>" +
@@ -347,7 +347,7 @@ function sendAccessEmail(email, password, plan, product, callback) {
     "</div></body></html>";
 
   const payload = JSON.stringify({
-    from: "GlobalTools <noreply@globaltools-international.example>",
+    from: process.env.RESEND_FROM_EMAIL || "GlobalTools <onboarding@resend.dev>",
     to: [email],
     subject: "Welcome to GlobalTools Finance — Your access is ready",
     text,
@@ -554,7 +554,7 @@ const gateway = http.createServer(async (req, res) => {
       const site = PUBLIC_SITE_URL || "http://" + (req.headers.host || "localhost");
       const form = [
         ["mode", "subscription"],
-        ["locale", "en-US"],
+        ["locale", "en"],
         ["line_items[0][price]", UPGRADE_PRICES[requested]],
         ["line_items[0][quantity]", "1"],
         ["success_url", site + "/account.html?upgrade=success&session_id={CHECKOUT_SESSION_ID}"],
