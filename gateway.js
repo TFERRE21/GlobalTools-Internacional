@@ -1,0 +1,649 @@
+const http = require("http");
+const https = require("https");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const { spawn } = require("child_process");
+
+const ROOT = __dirname;
+const PORT = Number(process.env.PORT || 3000);
+const CORE_PORT = Number(process.env.CORE_PORT || (PORT === 3000 ? 3001 : PORT + 1));
+const PUBLIC_SITE_URL = (process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
+const APP_DATA_DIR = path.join(ROOT, "data");
+let DATA_DIR = process.env.GLOBALTOOLS_DATA_DIR || process.env.DATA_DIR || "/var/lib/globaltools";
+let USERS_FILE = path.join(DATA_DIR, "users.json");
+let SESSIONS_FILE = path.join(DATA_DIR, "sessions.json");
+const FINANCE_PREFIX = "finance-";
+const SESSION_COOKIE = "gt_session";
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "GlobalTools <onboarding@resend.dev>";
+
+const PRODUCTS = {
+  "small-business-finance-dashboard": {
+    name: "Small Business Finance Dashboard",
+    plan: "starter",
+    file: "GlobalTools-Small-Business-Finance-Dashboard-PRO.xlsx"
+  },
+  "cash-flow-planner": {
+    name: "Cash Flow Planner",
+    plan: "starter",
+    file: "GlobalTools-Cash-Flow-Planner-PRO.xlsx"
+  },
+  "freelancer-business-kit": {
+    name: "Freelancer Business Kit",
+    plan: "business",
+    file: "GlobalTools-Freelancer-Business-Kit-PRO.xlsx"
+  }
+};
+
+const PLANS = {
+  starter: { label: "Starter", rank: 1 },
+  business: { label: "Business", rank: 2 },
+  unlimited: { label: "Unlimited", rank: 3 }
+};
+
+const UPGRADE_PRICES = {
+  business: "price_1UPvTeCCSBhBJict2AwZjYsQ",
+  unlimited: "price_1UPvTgCCSBhBJictKht1arvI"
+};
+
+function setDataDir(dir) {
+  DATA_DIR = dir;
+  USERS_FILE = path.join(DATA_DIR, "users.json");
+  SESSIONS_FILE = path.join(DATA_DIR, "sessions.json");
+}
+function ensureData() {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch (err) {
+    console.warn("Persistent data directory unavailable, using app data directory:", err.message);
+    setDataDir(APP_DATA_DIR);
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(USERS_FILE)) {
+    const oldUsers = path.join(APP_DATA_DIR, "users.json");
+    if (DATA_DIR !== APP_DATA_DIR && fs.existsSync(oldUsers)) fs.copyFileSync(oldUsers, USERS_FILE);
+    else fs.writeFileSync(USERS_FILE, "[]");
+  }
+  if (!fs.existsSync(SESSIONS_FILE)) {
+    const oldSessions = path.join(APP_DATA_DIR, "sessions.json");
+    if (DATA_DIR !== APP_DATA_DIR && fs.existsSync(oldSessions)) fs.copyFileSync(oldSessions, SESSIONS_FILE);
+    else fs.writeFileSync(SESSIONS_FILE, "{}");
+  }
+  if (DATA_DIR !== APP_DATA_DIR && fs.existsSync(APP_DATA_DIR)) {
+    for (const name of fs.readdirSync(APP_DATA_DIR)) {
+      if (name.startsWith(FINANCE_PREFIX) && name.endsWith(".json")) {
+        const src = path.join(APP_DATA_DIR, name), dst = path.join(DATA_DIR, name);
+        if (!fs.existsSync(dst)) fs.copyFileSync(src, dst);
+      }
+    }
+  }
+}
+function readUsers() {
+  ensureData();
+  try { return JSON.parse(fs.readFileSync(USERS_FILE, "utf8")); } catch { return []; }
+}
+function writeJsonDurable(file, value) {
+  ensureData();
+  const dir = path.dirname(file);
+  fs.mkdirSync(dir, { recursive: true });
+  const serialized = JSON.stringify(value, null, 2);
+  const tmp = file + ".tmp";
+  const backup = file + ".bak";
+  fs.writeFileSync(tmp, serialized, { encoding: "utf8", flush: true });
+  if (fs.existsSync(file)) {
+    try { fs.copyFileSync(file, backup); } catch (err) { console.warn("Backup failed:", err.message); }
+  }
+  fs.renameSync(tmp, file);
+}
+function writeUsers(users) {
+  writeJsonDurable(USERS_FILE, users);
+}
+function hashPassword(password, salt) {
+  return crypto.scryptSync(password, salt, 64).toString("hex");
+}
+function newPassword() {
+  return crypto.randomBytes(6).toString("base64url").slice(0, 10) + "G";
+}
+function makeSession(userId) {
+  return crypto.randomBytes(32).toString("hex") + "." + userId + "." + Date.now().toString(36);
+}
+function parseCookies(req) {
+  const out = {};
+  String(req.headers.cookie || "").split(";").forEach(pair => {
+    const i = pair.indexOf("=");
+    if (i > -1) out[pair.slice(0, i).trim()] = decodeURIComponent(pair.slice(i + 1).trim());
+  });
+  return out;
+}
+function userFromRequest(req) {
+  const token = parseCookies(req)[SESSION_COOKIE];
+  if (!token) return null;
+  const sessions = readSessions();
+  const s = sessions[token];
+  if (!s || Date.now() - s.createdAt > SESSION_TTL_MS) return null;
+  const users = readUsers();
+  return users.find(u => u.id === s.userId) || null;
+}
+function readSessions() {
+  ensureData();
+  try { return JSON.parse(fs.readFileSync(SESSIONS_FILE, "utf8")); } catch { return {}; }
+}
+function writeSessions(s) {
+  writeJsonDurable(SESSIONS_FILE, s);
+}
+function setSession(res, userId) {
+  const sessions = readSessions();
+  const token = makeSession(userId);
+  sessions[token] = { userId, createdAt: Date.now() };
+  writeSessions(sessions);
+  res.setHeader("Set-Cookie", SESSION_COOKIE + "=" + encodeURIComponent(token) + "; HttpOnly; Path=/; SameSite=Lax; Max-Age=" + Math.floor(SESSION_TTL_MS / 1000));
+}
+function clearSession(req, res) {
+  const token = parseCookies(req)[SESSION_COOKIE];
+  if (token) {
+    const sessions = readSessions();
+    delete sessions[token];
+    writeSessions(sessions);
+  }
+  res.setHeader("Set-Cookie", SESSION_COOKIE + "=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0");
+}
+function json(res, status, data) {
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(JSON.stringify(data));
+}
+function body(req) {
+  return new Promise((resolve, reject) => {
+    let raw = "";
+    req.on("data", c => {
+      raw += c;
+      if (Buffer.byteLength(raw) > 1024 * 1024) req.destroy();
+    });
+    req.on("end", () => {
+      try { resolve(raw ? JSON.parse(raw) : {}); } catch { reject(new Error("JSON inválido")); }
+    });
+    req.on("error", reject);
+  });
+}
+function rank(plan) { return PLANS[plan] ? PLANS[plan].rank : 0; }
+function permissions(plan) {
+  return {
+    dashboard: true,
+    transactions: true,
+    cashflow: true,
+    reports: rank(plan) >= 2,
+    forecast: rank(plan) >= 2,
+    goals: rank(plan) >= 2,
+    advanced: rank(plan) >= 3,
+    multiCompany: rank(plan) >= 3
+  };
+}
+function sanitizeEmail(v) { return String(v || "").trim().toLowerCase(); }
+function financeFile(userId) { return path.join(DATA_DIR, FINANCE_PREFIX + userId + ".json"); }
+function defaultFinance() {
+  return { transactions: [], accounts: [], categories: [], budget: [], goals: [], notes: "", updatedAt: new Date().toISOString() };
+}
+function readFinance(userId) {
+  const file = financeFile(userId);
+  if (!fs.existsSync(file)) return defaultFinance();
+  try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return defaultFinance(); }
+}
+function writeFinance(userId, data) {
+  const safe = data && typeof data === "object" ? data : {};
+  safe.updatedAt = new Date().toISOString();
+  writeJsonDurable(financeFile(userId), safe);
+}
+function stripeRequest(method, stripePath, form, callback) {
+  if (!STRIPE_SECRET_KEY) return callback(new Error("STRIPE_SECRET_KEY não configurada"));
+  const data = form ? Buffer.from(form) : null;
+  const r = https.request({
+    hostname: "api.stripe.com",
+    path: stripePath,
+    method,
+    headers: { Authorization: "Bearer " + STRIPE_SECRET_KEY, "Content-Type": "application/x-www-form-urlencoded", ...(data ? { "Content-Length": data.length } : {}) }
+  }, rr => {
+    let raw = "";
+    rr.setEncoding("utf8");
+    rr.on("data", c => raw += c);
+    rr.on("end", () => {
+      let j = null; try { j = JSON.parse(raw); } catch {}
+      if (rr.statusCode < 200 || rr.statusCode >= 300) return callback(new Error(j?.error?.message || raw || "Stripe HTTP " + rr.statusCode));
+      callback(null, j);
+    });
+  });
+  r.on("error", callback);
+  if (data) r.write(data);
+  r.end();
+}
+function enc(v) { return encodeURIComponent(v).replace(/%20/g, "+"); }
+function verifyStripe(raw, sig) {
+  if (!STRIPE_WEBHOOK_SECRET || !sig) return false;
+  const parts = {};
+  String(sig).split(",").forEach(x => {
+    const [k, v] = x.split("=", 2);
+    if (k && v) (parts[k] ||= []).push(v);
+  });
+  const t = parts.t?.[0], vs = parts.v1 || [];
+  if (!t || Math.abs(Date.now() / 1000 - Number(t)) > 300) return false;
+  const expected = crypto.createHmac("sha256", STRIPE_WEBHOOK_SECRET).update(t + "." + raw).digest("hex");
+  return vs.some(v => { try { return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v)); } catch { return false; } });
+}
+function planForProduct(slug) { return PRODUCTS[slug]?.plan || "starter"; }
+function upsertUser(email, plan, productSlug, forceNewPassword = false, generatePassword = true) {
+  const users = readUsers();
+  let u = users.find(x => x.email === email);
+  let generatedPassword = null;
+  const firstActivation = generatePassword && (!u || !u.passwordDeliveredAt || forceNewPassword);
+  if (!u) {
+    u = {
+      id: "usr_" + crypto.randomBytes(9).toString("hex"),
+      email,
+      passwordSalt: "",
+      passwordHash: "",
+      plan,
+      products: [],
+      createdAt: new Date().toISOString()
+    };
+    users.push(u);
+  } else if (rank(plan) > rank(u.plan)) {
+    u.plan = plan;
+  }
+  if (firstActivation) {
+    generatedPassword = newPassword();
+    u.passwordSalt = crypto.randomBytes(16).toString("hex");
+    u.passwordHash = hashPassword(generatedPassword, u.passwordSalt);
+    u.passwordDeliveredAt = new Date().toISOString();
+    u.passwordUpdatedAt = u.passwordDeliveredAt;
+    u.credentialsVersion = Number(u.credentialsVersion || 0) + 1;
+  } else if (!u.passwordSalt || !u.passwordHash) {
+    generatedPassword = newPassword();
+    u.passwordSalt = crypto.randomBytes(16).toString("hex");
+    u.passwordHash = hashPassword(generatedPassword, u.passwordSalt);
+    u.passwordDeliveredAt = new Date().toISOString();
+    u.passwordUpdatedAt = u.passwordDeliveredAt;
+    u.credentialsVersion = Number(u.credentialsVersion || 0) + 1;
+  }
+  if (productSlug && !u.products.includes(productSlug)) u.products.push(productSlug);
+  u.updatedAt = new Date().toISOString();
+  writeUsers(users);
+  return { user: u, generatedPassword };
+}
+function sendAccessEmail(email, password, plan, product, callback) {
+  if (!RESEND_API_KEY) return callback(false, new Error("RESEND_API_KEY não configurada"), 0, false);
+
+  const attachments = [];
+  let attachmentIncluded = false;
+  if (product && product.file) {
+    const workbookPath = path.join(ROOT, "products", product.file);
+    if (fs.existsSync(workbookPath)) {
+      const workbook = fs.readFileSync(workbookPath);
+      attachments.push({
+        filename: product.file,
+        content: workbook.toString("base64"),
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+      attachmentIncluded = true;
+    } else {
+      console.warn("[resend] Workbook not found:", workbookPath);
+    }
+  }
+
+  const productName = product?.name || "Digital product";
+  const safeEmail = String(email).replace(/[<>&"]/g, "");
+  const safePassword = String(password).replace(/[<>&"]/g, "");
+  const safePlan = String(plan).replace(/[<>&"]/g, "");
+  const safeProduct = String(productName).replace(/[<>&"]/g, "");
+  const text =
+    "Welcome to GlobalTools Finance\n\n" +
+    "Your purchase is confirmed and your GlobalTools Finance account is ready.\n\n" +
+    "Product: " + safeProduct + "\n" +
+    "Plan: " + safePlan + "\n" +
+    "Email: " + safeEmail + "\n" +
+    "Initial password: " + safePassword + "\n\n" +
+    "Access your dashboard: " + (PUBLIC_SITE_URL || "http://localhost:3000") + "/account.html\n\n" +
+    (attachmentIncluded ? "Your purchased spreadsheet is attached to this email.\n\n" : "") +
+    "For security, change your password after your first sign-in.\n\n" +
+    "GlobalTools Finance\nFinancial tools for modern businesses.";
+
+  const html =
+    "<!doctype html><html><body style='margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#182230'>" +
+    "<div style='padding:36px 14px'>" +
+    "<table role='presentation' cellpadding='0' cellspacing='0' border='0' width='100%' style='max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #e4e9ef;border-radius:18px;overflow:hidden'>" +
+    "<tr><td style='padding:28px 34px;background:#0b1118'>" +
+    "<div style='font-size:25px;font-weight:800;letter-spacing:-.5px;color:#ffffff'>GlobalTools<span style='color:#31d583'> Finance</span></div>" +
+    "<div style='margin-top:7px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9eabb9'>Your financial workspace</div>" +
+    "</td></tr>" +
+    "<tr><td style='padding:38px 34px 24px'>" +
+    "<div style='display:inline-block;padding:7px 10px;border-radius:999px;background:#e9fbf2;color:#148451;font-size:12px;font-weight:700'>ACCESS READY</div>" +
+    "<h1 style='font-size:28px;line-height:1.2;margin:18px 0 10px;color:#111827'>Welcome to GlobalTools Finance</h1>" +
+    "<p style='font-size:15px;line-height:1.65;margin:0;color:#566273'>Your purchase has been confirmed. Your account is ready and your digital product is attached to this email.</p>" +
+    "</td></tr>" +
+    "<tr><td style='padding:0 34px 8px'>" +
+    "<table role='presentation' cellpadding='0' cellspacing='0' border='0' width='100%' style='background:#f7f9fb;border:1px solid #e4e9ef;border-radius:14px'>" +
+    "<tr><td style='padding:20px 22px'>" +
+    "<div style='font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7b8796'>Account details</div>" +
+    "<div style='margin-top:14px;font-size:14px;color:#3d4856'><b>Product</b><br>" + safeProduct + "</div>" +
+    "<div style='margin-top:13px;font-size:14px;color:#3d4856'><b>Plan</b><br>" + safePlan + "</div>" +
+    "<div style='margin-top:13px;font-size:14px;color:#3d4856'><b>Email</b><br>" + safeEmail + "</div>" +
+    "</td></tr></table>" +
+    "</td></tr>" +
+    "<tr><td style='padding:24px 34px 10px'>" +
+    "<div style='font-size:12px;color:#7b8796;text-transform:uppercase;letter-spacing:.08em'>Your initial password</div>" +
+    "<div style='margin-top:9px;padding:14px 16px;border:1px dashed #cbd5e1;border-radius:10px;background:#fff;font-family:Consolas,monospace;font-size:17px;font-weight:700;color:#111827;letter-spacing:.04em'>" + safePassword + "</div>" +
+    "<p style='font-size:12px;line-height:1.6;color:#7b8796;margin:9px 0 0'>This password is temporary. Change it from Settings after signing in.</p>" +
+    "</td></tr>" +
+    "<tr><td style='padding:22px 34px 30px;text-align:center'>" +
+    "<a href='https://globaltools-international.example/account.html' style='display:inline-block;padding:14px 25px;border-radius:10px;background:#21c879;color:#06140d;text-decoration:none;font-size:14px;font-weight:800'>Open GlobalTools Finance</a>" +
+    "</td></tr>" +
+    "<tr><td style='padding:22px 34px;border-top:1px solid #edf0f3;background:#fbfcfd'>" +
+    "<p style='margin:0;font-size:13px;line-height:1.6;color:#566273'>" +
+    (attachmentIncluded ? "Your spreadsheet is attached and is also available from your account dashboard. " : "Your digital product is available from your account dashboard. ") +
+    "For your security, never share your password.</p>" +
+    "<p style='margin:14px 0 0;font-size:11px;line-height:1.6;color:#8a95a3'>GlobalTools Finance · Your finance dashboard<br>This is an automated transactional email related to your purchase.</p>" +
+    "</td></tr></table>" +
+    "</div></body></html>";
+
+  const payload = JSON.stringify({
+    from: "GlobalTools <noreply@globaltools-international.example>",
+    to: [email],
+    subject: "Welcome to GlobalTools Finance — Your access is ready",
+    text,
+    html,
+    attachments
+  });
+
+  const r = https.request({
+    hostname: "api.resend.com",
+    path: "/emails",
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + RESEND_API_KEY,
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(payload)
+    }
+  }, rr => {
+    let raw = "";
+    rr.on("data", x => raw += x);
+    rr.on("end", () => {
+      const ok = rr.statusCode >= 200 && rr.statusCode < 300;
+      callback(ok, ok ? null : new Error(raw || "Resend HTTP " + rr.statusCode), rr.statusCode, attachmentIncluded);
+    });
+  });
+  r.on("error", e => callback(false, e, 0, attachmentIncluded));
+  r.write(payload);
+  r.end();
+}
+function publicUser(u) {
+  return { id: u.id, email: u.email, plan: u.plan, planLabel: PLANS[u.plan]?.label || u.plan, products: u.products, subscriptionActive: !!u.subscriptionId, permissions: permissions(u.plan) };
+}
+function proxy(req, res) {
+  const r = http.request({
+    hostname: "127.0.0.1", port: CORE_PORT, method: req.method,
+    path: req.url, headers: { ...req.headers, host: "127.0.0.1:" + CORE_PORT }
+  }, rr => {
+    res.writeHead(rr.statusCode || 502, rr.headers);
+    rr.pipe(res);
+  });
+  r.on("error", () => json(res, 502, { ok: false, error: "Serviço temporariamente indisponível." }));
+  req.pipe(r);
+}
+function sendFile(res, file, downloadName) {
+  if (!fs.existsSync(file)) return json(res, 404, { ok: false, error: "Arquivo não encontrado." });
+  res.writeHead(200, {
+    "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "Content-Disposition": "attachment; filename=\"" + downloadName.replace(/"/g, "") + "\"",
+    "Cache-Control": "private, no-store"
+  });
+  fs.createReadStream(file).pipe(res);
+}
+
+const core = spawn(process.execPath, [path.join(ROOT, "server.js")], {
+  env: { ...process.env, PORT: String(CORE_PORT) },
+  stdio: "inherit"
+});
+core.on("exit", code => { if (code && code !== 0) console.error("Core server exited:", code); });
+
+ensureData();
+
+const gateway = http.createServer(async (req, res) => {
+  const url = new URL(req.url || "/", "http://localhost");
+  try {
+    if (req.method === "GET" && url.pathname === "/api/me") {
+      const u = userFromRequest(req);
+      return json(res, 200, { ok: true, authenticated: !!u, user: u ? publicUser(u) : null });
+    }
+    if (req.method === "POST" && url.pathname === "/api/login") {
+      const b = await body(req);
+      const email = sanitizeEmail(b.email);
+      const password = String(b.password || "");
+      const u = readUsers().find(x => x.email === email);
+      if (!u || !u.passwordSalt || !u.passwordHash) return json(res, 401, { ok: false, error: "Conta sem credenciais válidas. Reative o acesso pela confirmação da compra." });
+      if (hashPassword(password.trim(), u.passwordSalt) !== u.passwordHash) return json(res, 401, { ok: false, error: "E-mail ou senha inválidos." });
+      setSession(res, u.id);
+      return json(res, 200, { ok: true, user: publicUser(u) });
+    }
+    if (req.method === "POST" && url.pathname === "/api/change-password") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para alterar sua senha." });
+      const b = await body(req);
+      const currentPassword = String(b.current_password || "").trim();
+      const newPassword = String(b.new_password || "").trim();
+      if (!currentPassword || !newPassword) return json(res, 400, { ok: false, error: "Informe a senha atual e a nova senha." });
+      if (newPassword.length < 8) return json(res, 400, { ok: false, error: "A nova senha deve ter pelo menos 8 caracteres." });
+      if (!u.passwordSalt || hashPassword(currentPassword, u.passwordSalt) !== u.passwordHash) {
+        return json(res, 401, { ok: false, error: "A senha atual está incorreta." });
+      }
+      const users = readUsers();
+      const target = users.find(x => x.id === u.id);
+      if (!target) return json(res, 404, { ok: false, error: "Conta não encontrada." });
+      target.passwordSalt = crypto.randomBytes(16).toString("hex");
+      target.passwordHash = hashPassword(newPassword, target.passwordSalt);
+      target.passwordDeliveredAt = new Date().toISOString();
+      target.passwordUpdatedAt = target.passwordDeliveredAt;
+      target.credentialsVersion = Number(target.credentialsVersion || 0) + 1;
+      target.updatedAt = new Date().toISOString();
+      writeUsers(users);
+      return json(res, 200, { ok: true });
+    }
+    if (req.method === "POST" && url.pathname === "/api/logout") {
+      clearSession(req, res);
+      return json(res, 200, { ok: true });
+    }
+    if (req.method === "POST" && url.pathname === "/api/activate-session") {
+      const b = await body(req);
+      const sessionId = String(b.session_id || "");
+      if (!sessionId) return json(res, 400, { ok: false, error: "Sessão de pagamento ausente." });
+      stripeRequest("GET", "/v1/checkout/sessions/" + encodeURIComponent(sessionId), null, (err, session) => {
+        if (err) return json(res, 400, { ok: false, error: "Não foi possível validar o pagamento." });
+        const slug = session.metadata?.product_slug;
+        const email = sanitizeEmail(session.customer_details?.email || session.customer_email);
+        if ((session.payment_status !== "paid" && Number(session.amount_total || 0) !== 0) || !PRODUCTS[slug] || !email) {
+          return json(res, 403, { ok: false, error: "Pagamento não confirmado ou produto inválido." });
+        }
+        const created = upsertUser(email, planForProduct(slug), slug, false, false);
+        setSession(res, created.user.id);
+        return json(res, 200, { ok: true, user: publicUser(created.user) });
+      });
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/activate-account") {
+      const b = await body(req);
+      const sessionId = String(b.session_id || "");
+      if (!sessionId) return json(res, 400, { ok: false, error: "Sessão de pagamento ausente." });
+      stripeRequest("GET", "/v1/checkout/sessions/" + encodeURIComponent(sessionId), null, (err, session) => {
+        if (err) return json(res, 400, { ok: false, error: "Não foi possível validar o pagamento." });
+        const slug = session.metadata?.product_slug;
+        const email = sanitizeEmail(session.customer_details?.email || session.customer_email);
+        if ((session.payment_status !== "paid" && Number(session.amount_total || 0) !== 0) || !PRODUCTS[slug] || !email) return json(res, 403, { ok: false, error: "Pagamento não confirmado ou produto inválido." });
+        const created = upsertUser(email, planForProduct(slug), slug, false, true);
+        setSession(res, created.user.id);
+        if (created.generatedPassword) {
+          return sendAccessEmail(email, created.generatedPassword, PLANS[created.user.plan]?.label || created.user.plan, PRODUCTS[slug], (sent, emailError, emailStatus, attachmentIncluded) => {
+            json(res, 200, {
+              ok: true,
+              user: publicUser(created.user),
+              generatedPassword: created.generatedPassword,
+              emailSent: !!sent,
+              emailStatus: emailStatus || 0,
+              emailError: sent ? null : (emailError?.message || "Falha no envio do e-mail"),
+              attachmentIncluded: !!attachmentIncluded,
+              product: PRODUCTS[slug].name
+            });
+          });
+        }
+        return json(res, 200, { ok: true, user: publicUser(created.user), generatedPassword: null, emailSent: false, product: PRODUCTS[slug].name });
+      });
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/finance/data") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para acessar o painel." });
+      return json(res, 200, { ok: true, data: readFinance(u.id), user: publicUser(u) });
+    }
+    if (req.method === "POST" && url.pathname === "/api/finance/data") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para acessar o painel." });
+      const b = await body(req);
+      writeFinance(u.id, b.data);
+      return json(res, 200, { ok: true, data: readFinance(u.id) });
+    }
+    if (req.method === "POST" && url.pathname === "/api/billing-portal") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para gerenciar seu plano." });
+      if (!u.stripeCustomerId) return json(res, 400, { ok: false, error: "Esta conta ainda não possui uma assinatura Stripe ativa." });
+      const site = PUBLIC_SITE_URL || "http://" + (req.headers.host || "localhost");
+      const form = [["customer", u.stripeCustomerId], ["return_url", site + "/account.html"]].map(([k,v]) => enc(k) + "=" + enc(v)).join("&");
+      stripeRequest("POST", "/v1/billing_portal/sessions", form, (err, session) => {
+        if (err) return json(res, 400, { ok: false, error: err.message });
+        json(res, 200, { ok: true, url: session.url });
+      });
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/confirm-upgrade") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para confirmar o plano." });
+      const b = await body(req);
+      const sessionId = String(b.session_id || "");
+      if (!sessionId) return json(res, 400, { ok: false, error: "Sessão de pagamento ausente." });
+      stripeRequest("GET", "/v1/checkout/sessions/" + encodeURIComponent(sessionId), null, (err, session) => {
+        if (err) return json(res, 400, { ok: false, error: "Não foi possível validar o pagamento." });
+        const meta = session.metadata || {};
+        const requested = String(meta.access_plan || "").toLowerCase();
+        const sameUser = String(meta.account_user_id || "") === String(u.id);
+        if (!sameUser || !UPGRADE_PRICES[requested] || session.mode !== "subscription" || session.payment_status !== "paid") return json(res, 403, { ok: false, error: "Upgrade not confirmed." });
+        const users = readUsers();
+        const target = users.find(x => x.id === u.id);
+        if (!target) return json(res, 404, { ok: false, error: "Conta não encontrada." });
+        target.plan = requested;
+        if (session.customer) target.stripeCustomerId = session.customer;
+        if (session.subscription) target.subscriptionId = session.subscription;
+        target.updatedAt = new Date().toISOString();
+        writeUsers(users);
+        return json(res, 200, { ok: true, user: publicUser(target) });
+      });
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/api/upgrade") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para fazer upgrade." });
+      const requested = String((await body(req)).plan || "").toLowerCase();
+      if (!UPGRADE_PRICES[requested] || rank(requested) <= rank(u.plan)) return json(res, 400, { ok: false, error: "Invalid upgrade plan." });
+      const site = PUBLIC_SITE_URL || "http://" + (req.headers.host || "localhost");
+      const form = [
+        ["mode", "subscription"],
+        ["locale", "en-US"],
+        ["line_items[0][price]", UPGRADE_PRICES[requested]],
+        ["line_items[0][quantity]", "1"],
+        ["success_url", site + "/account.html?upgrade=success&session_id={CHECKOUT_SESSION_ID}"],
+        ["cancel_url", site + "/account.html?upgrade=cancelled"],
+        ["metadata[account_user_id]", u.id],
+        ["metadata[access_plan]", requested],
+        ["metadata[email]", u.email],
+        ["subscription_data[metadata][account_user_id]", u.id],
+        ["subscription_data[metadata][access_plan]", requested],
+        ["subscription_data[metadata][email]", u.email]
+      ].map(([k,v]) => enc(k) + "=" + enc(v)).join("&");
+      stripeRequest("POST", "/v1/checkout/sessions", form, (err, session) => {
+        if (err) return json(res, 400, { ok: false, error: err.message });
+        json(res, 200, { ok: true, url: session.url });
+      });
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/download-product") {
+      const u = userFromRequest(req);
+      if (!u) return json(res, 401, { ok: false, error: "Faça login para baixar." });
+      const slug = String(url.searchParams.get("product") || u.products[0] || "");
+      const product = PRODUCTS[slug];
+      if (!product || !u.products.includes(slug)) return json(res, 403, { ok: false, error: "Produto não liberado para esta conta." });
+      return sendFile(res, path.join(ROOT, "products", product.file), product.file);
+    }
+    if (req.method === "POST" && url.pathname === "/api/stripe-webhook") {
+      let raw = "";
+      req.on("data", c => raw += c);
+      req.on("end", () => {
+        if (!verifyStripe(raw, req.headers["stripe-signature"])) return json(res, 400, { ok: false, error: "Assinatura inválida." });
+        let event; try { event = JSON.parse(raw); } catch { return json(res, 400, { ok: false, error: "Evento inválido." }); }
+        const obj = event.data?.object || {};
+        if (event.type === "checkout.session.completed") {
+          const slug = obj.metadata?.product_slug;
+          const email = sanitizeEmail(obj.customer_details?.email || obj.customer_email);
+          if (email && PRODUCTS[slug] && (obj.payment_status === "paid" || Number(obj.amount_total || 0) === 0)) {
+            upsertUser(email, planForProduct(slug), slug, false, false);
+          }
+          if (obj.mode === "subscription" && obj.metadata?.account_user_id && obj.metadata?.access_plan) {
+            const users = readUsers(); const u = users.find(x => x.id === obj.metadata.account_user_id);
+            if (u) { u.plan = obj.metadata.access_plan; u.stripeCustomerId = obj.customer; u.subscriptionId = obj.subscription; writeUsers(users); }
+          }
+        }
+        if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.created") {
+          const meta = obj.metadata || {};
+          if (meta.account_user_id && meta.access_plan) {
+            const users = readUsers(); const u = users.find(x => x.id === meta.account_user_id);
+            if (u) { u.plan = meta.access_plan; u.subscriptionId = obj.id; u.stripeCustomerId = obj.customer; writeUsers(users); }
+          }
+        }
+        if (event.type === "customer.subscription.deleted") {
+          const meta = obj.metadata || {};
+          if (meta.account_user_id) {
+            const users = readUsers(); const u = users.find(x => x.id === meta.account_user_id);
+            if (u) { u.plan = u.products.some(slug => planForProduct(slug) === "business") ? "business" : "starter"; u.subscriptionId = null; writeUsers(users); }
+          }
+        }
+        json(res, 200, { received: true });
+      });
+      return;
+    }
+    if (url.pathname === "/account.html" && req.method === "GET" && url.searchParams.get("session_id")) {
+      const sessionId = String(url.searchParams.get("session_id") || "");
+      stripeRequest("GET", "/v1/checkout/sessions/" + encodeURIComponent(sessionId), null, (err, session) => {
+        if (!err) {
+          const slug = session.metadata?.product_slug;
+          const email = sanitizeEmail(session.customer_details?.email || session.customer_email);
+          const valid = (session.payment_status === "paid" || Number(session.amount_total || 0) === 0) && PRODUCTS[slug] && email;
+          if (valid) {
+            const created = upsertUser(email, planForProduct(slug), slug, false, false);
+            setSession(res, created.user.id);
+            url.searchParams.delete("session_id");
+            req.url = url.pathname + (url.search ? url.search : "");
+          }
+        }
+        return proxy(req, res);
+      });
+      return;
+    }
+    if (url.pathname === "/login.html" || url.pathname === "/account.html" || url.pathname === "/account-success.html") {
+      return proxy(req, res);
+    }
+    return proxy(req, res);
+  } catch (e) {
+    console.error(e);
+    return json(res, 500, { ok: false, error: "Erro interno." });
+  }
+});
+
+gateway.listen(PORT, "0.0.0.0", () => console.log("GlobalTools gateway running on port " + PORT + " (core " + CORE_PORT + ")"));
+process.on("SIGTERM", () => { core.kill("SIGTERM"); process.exit(0); });
+process.on("SIGINT", () => { core.kill("SIGINT"); process.exit(0); });

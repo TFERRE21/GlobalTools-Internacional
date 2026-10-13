@@ -1,0 +1,12 @@
+{
+  "name": "globaltools-international",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GlobalTools International - free online tools",
+  "scripts": {
+    "start": "node gateway.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
