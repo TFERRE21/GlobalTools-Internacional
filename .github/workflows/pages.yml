@@ -104,7 +104,7 @@ jobs:
           curl -fsS http://127.0.0.1:3500/es/tools/pdf-to-word.html -o /tmp/pdf-to-word-es.html
           curl -fsS http://127.0.0.1:3500/fr/tools/compress-pdf.html -o /tmp/compress-pdf-fr.html
           grep -F '<html lang="pt-BR">' /tmp/word-to-pdf-pt.html
-          grep -F '<title>Word para PDF grátis online | GlobalTools</title>' /tmp/word-to-pdf-pt.html
+          grep -F '<title>Converter Word em PDF Grátis | GlobalTools</title>' /tmp/word-to-pdf-pt.html
           grep -F 'href="https://globaltoolsnow.com/pt/tools/word-to-pdf.html"' /tmp/word-to-pdf-pt.html
           grep -F 'rel="icon" href="/icon.svg"' /tmp/word-to-pdf-pt.html
           grep -F '"logo":{"@type":"ImageObject","url":"https://globaltoolsnow.com/icon.svg"' /tmp/word-to-pdf-pt.html
@@ -114,7 +114,11 @@ jobs:
             exit 1
           fi
           grep -F 'Extrae texto de un PDF' /tmp/pdf-to-word-es.html
+          grep -F '<title>PDF a Word Gratis Online | GlobalTools</title>' /tmp/pdf-to-word-es.html
+          grep -F 'Convierte PDF a Word gratis online' /tmp/pdf-to-word-es.html
           grep -F 'La méthode actuelle ne réduit pas la résolution' /tmp/compress-pdf-fr.html
+          grep -F '<title>Compresser PDF Gratuit en Ligne | GlobalTools</title>' /tmp/compress-pdf-fr.html
+          grep -F 'Compressez un PDF gratuitement en ligne' /tmp/compress-pdf-fr.html
           # Sitemap must be valid XML and list the localized routes with language alternates.
           curl -fsS http://127.0.0.1:3500/sitemap.xml -o /tmp/sitemap.xml
           python3 - <<'PY'
