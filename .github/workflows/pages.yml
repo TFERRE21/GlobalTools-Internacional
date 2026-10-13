@@ -106,6 +106,8 @@ jobs:
           grep -F '<html lang="pt-BR">' /tmp/word-to-pdf-pt.html
           grep -F '<title>Word para PDF grátis online | GlobalTools</title>' /tmp/word-to-pdf-pt.html
           grep -F 'href="https://globaltoolsnow.com/pt/tools/word-to-pdf.html"' /tmp/word-to-pdf-pt.html
+          grep -F 'rel="icon" href="/icon.svg"' /tmp/word-to-pdf-pt.html
+          grep -F '"logo":{"@type":"ImageObject","url":"https://globaltoolsnow.com/icon.svg"' /tmp/word-to-pdf-pt.html
           grep -F 'Ferramentas online gratuitas para tarefas do dia a dia.' /tmp/word-to-pdf-pt.html
           if grep -F 'href="/tools/word-to-text.html"' /tmp/word-to-pdf-pt.html; then
             echo "Localized pages should not recommend untranslated English tools"
