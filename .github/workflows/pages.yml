@@ -76,3 +76,6 @@ jobs:
           grep -F '"authenticated":false' /tmp/me.json
           curl -fsS http://127.0.0.1:3500/robots.txt | grep -F "Sitemap: https://globaltools.example/sitemap.xml"
           curl -fsS http://127.0.0.1:3500/ | grep -F "GlobalTools — Free Online Tools"
+          curl -fsS http://127.0.0.1:3500/store.html -o /tmp/store.html
+          grep -F 'adsbygoogle.js?client=ca-pub-6472882150880001' /tmp/store.html
+          test "$(grep -o 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/store.html | wc -l)" -eq 1
