@@ -473,6 +473,9 @@ const server = http.createServer((req, res) => {
       /\/products\/[^/]+-success\.html$/i.test(urlPath);
     if (noAdsPage) {
       html = html.replace(/<script\b[^>]*src=["']https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js[^"']*["'][^>]*>\s*<\/script>/gi, "");
+      if (!/<meta\s+name=["']robots["'][^>]*noindex/i.test(html)) {
+        html = html.replace(/<head>/i, '<head><meta name="robots" content="noindex,nofollow">');
+      }
     } else if (!html.includes("pagead2.googlesyndication.com/pagead/js/adsbygoogle.js")) {
       html = html.replace(/<head>/i, '<head><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>');
     }
