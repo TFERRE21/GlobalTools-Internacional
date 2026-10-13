@@ -294,7 +294,16 @@ const server = http.createServer((req, res) => {
     });
   }
   if (urlPath === "/ads.txt" || urlPath === "/ads.txt/") {
-    const body = "google.com, pub-6472882150880001, DIRECT, f08c47fec0942fa0" + String.fromCharCode(10);
+    const adsFile = path.join(root, "ads.txt");
+    let body;
+    try {
+      body = fs.readFileSync(adsFile, "utf8");
+    } catch (err) {
+      console.error("[GlobalTools ads.txt] Cannot read ads.txt:", err.message);
+      res.writeHead(500, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"});
+      return res.end("ads.txt is not available.");
+    }
+    if (!body.endsWith("\n")) body += "\n";
     res.writeHead(200, {
       "Content-Type": "text/plain; charset=utf-8",
       "Content-Length": Buffer.byteLength(body),
