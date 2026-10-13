@@ -191,21 +191,44 @@ const server = http.createServer((req, res) => {
 
   if (urlPath === "/api/support/ticket" && req.method === "POST") {
     return readBody(req, (bodyErr, rawBody) => {
+      if (bodyErr) {
+        res.writeHead(400, {"Content-Type":"application/json; charset=utf-8", "Cache-Control":"no-store"});
+        return res.end(JSON.stringify({ok:false,error:"Could not read the request."}));
+      }
       let payload = {};
       try { payload = rawBody ? JSON.parse(rawBody) : {}; } catch {}
-      const name=String(payload.name||"").trim().slice(0,120), email=String(payload.email||"").trim().slice(0,180), priority=String(payload.priority||"normal").slice(0,20), message=String(payload.message||"").trim().slice(0,3000), page=String(payload.page||"").slice(0,500);
-      if(!name||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!message){
-        res.writeHead(400,{"Content-Type":"application/json; charset=utf-8"});return res.end(JSON.stringify({error:"Name, valid email and message are required."}));
+      const name=String(payload.name||"").trim().slice(0,120);
+      const email=String(payload.email||"").trim().slice(0,180);
+      const priority=String(payload.priority||"normal").trim().slice(0,20);
+      const message=String(payload.message||"").trim().slice(0,3000);
+      const page=String(payload.page||"").slice(0,500);
+      const honeypot=String(payload.company||"").trim();
+      if (honeypot) {
+        res.writeHead(400, {"Content-Type":"application/json; charset=utf-8", "Cache-Control":"no-store"});
+        return res.end(JSON.stringify({ok:false,error:"Invalid submission."}));
+      }
+      if(!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !message){
+        res.writeHead(400,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});
+        return res.end(JSON.stringify({ok:false,error:"Name, a valid email and a message are required."}));
       }
       const ticketId="GT-"+Date.now().toString(36).toUpperCase()+"-"+crypto.randomBytes(2).toString("hex").toUpperCase();
-      const dir=path.join(root,"data");const file=path.join(dir,"support-tickets.json");
+      const dir=process.env.GLOBALTOOLS_DATA_DIR || process.env.DATA_DIR || path.join(root,"data");
+      const ticketFile=path.join(dir,"support-tickets.json");
       try{
         fs.mkdirSync(dir,{recursive:true});
-        let tickets=[];if(fs.existsSync(file)){try{tickets=JSON.parse(fs.readFileSync(file,"utf8"))||[]}catch{}}
+        let tickets=[];
+        if(fs.existsSync(ticketFile)){
+          const existing=JSON.parse(fs.readFileSync(ticketFile,"utf8"));
+          if(Array.isArray(existing)) tickets=existing;
+        }
         tickets.push({ticketId,createdAt:new Date().toISOString(),status:"open",name,email,priority,message,page});
-        fs.writeFileSync(file,JSON.stringify(tickets,null,2));
-      }catch(e){console.error("[support] ticket storage error",e.message)}
-      console.log("[support] ticket",ticketId,priority,email);
+        fs.writeFileSync(ticketFile,JSON.stringify(tickets,null,2),"utf8");
+      }catch(e){
+        console.error("[support] ticket storage error",e.message);
+        res.writeHead(500,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});
+        return res.end(JSON.stringify({ok:false,error:"We could not save your message. Please try again later."}));
+      }
+      console.log("[support] ticket received",ticketId,priority);
       res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});
       res.end(JSON.stringify({ok:true,ticketId}));
     });
@@ -350,28 +373,41 @@ const server = http.createServer((req, res) => {
       const relatedHtml = related.map(t => '<a class="related-tool" href="/tools/'+t.slug+'.html"><strong>'+safe(t.name)+'</strong><span>'+safe(t.desc)+'</span></a>').join('');
 
       const groups = {
-        text:["Esta ferramenta ajuda a trabalhar com texto diretamente no navegador.","Insira ou cole o texto no campo indicado.","Revise as opções disponíveis.","Execute a ferramenta e confira o resultado.","Caracteres especiais, espaços e quebras de linha podem influenciar a saída."],
-        developer:["Esta ferramenta atende uma tarefa comum de desenvolvimento, como formatação, validação, codificação ou transformação de dados.","Cole os dados ou código no campo de entrada.","Comece com um exemplo curto para validar o formato.","Execute e revise o resultado antes de usar em produção.","Nunca cole chaves privadas, senhas ou tokens reais sem compreender o processamento."],
-        pdf:["Esta ferramenta foi criada para uma operação específica com documentos PDF.","Selecione o PDF ou informe os dados solicitados.","Execute o processamento e aguarde a conclusão.","Abra o arquivo gerado e confirme o resultado.","PDFs com fontes, imagens, formulários ou criptografia podem apresentar limitações."],
-        documents:["Esta ferramenta ajuda a converter ou organizar documentos e dados de escritório.","Selecione o arquivo compatível.","Confira os formatos de entrada e saída.","Execute a operação e abra o arquivo gerado para conferir.","Conversões podem alterar elementos avançados de formatação."],
-        image:["Esta ferramenta trabalha com imagens para conversão, análise, redimensionamento ou compressão.","Selecione a imagem compatível.","Ajuste os parâmetros, se disponíveis.","Execute e confira formato, dimensões e qualidade.","Conversão e compressão podem alterar qualidade ou metadados."],
-        generators:["Esta ferramenta gera um novo resultado a partir de parâmetros informados pelo usuário.","Defina os parâmetros desejados.","Execute a geração.","Revise o resultado antes de utilizá-lo.","Para credenciais reais, utilize práticas de segurança adequadas e não reutilize senhas."],
-        converters:["Esta ferramenta converte um valor ou conteúdo de um formato para outro.","Informe o conteúdo de entrada.","Confira o formato esperado.","Execute a conversão e compare o resultado.","Conversões podem depender de padrões, precisão e formato de entrada."],
-        calculators:["Esta calculadora executa uma operação matemática a partir dos valores informados.","Informe os valores solicitados.","Confira unidades e separadores.","Execute o cálculo e revise a fórmula.","Para decisões financeiras, fiscais ou profissionais, confirme o resultado com uma fonte qualificada."],
-        "date-time":["Esta ferramenta ajuda a calcular ou interpretar datas, horários, intervalos ou timestamps.","Informe a data ou hora no formato indicado.","Execute a operação.","Confira fuso horário e convenção utilizados.","Fusos e formatos diferentes podem produzir resultados diferentes."],
-        security:["Esta ferramenta executa uma operação relacionada a segurança, análise, hash ou decodificação.","Use dados de teste sempre que possível.","Execute a operação.","Interprete o resultado antes de tomar uma decisão de segurança.","Decodificar ou analisar um dado não significa validar sua autenticidade ou segurança."]
+        text:["This tool helps you inspect, clean or transform text for a specific task.","Paste or type a short sample into the input field.","Review the options and confirm the desired output.","Run the tool and copy or download the result.","Line breaks, whitespace, punctuation and the language of the input can affect the result."],
+        developer:["This developer utility helps with a common data or code task, such as formatting, validation, encoding or transformation.","Paste a small sample of code or data into the input field.","Run the tool and compare the result with the original sample.","Review the output before using it in a live application.","Never paste private keys, production credentials, passwords or access tokens into a tool unless you fully understand the processing path."],
+        pdf:["This PDF utility is designed for a particular document workflow, such as converting, organizing or inspecting PDF files.","Choose compatible PDF files and review any available instructions.","Start with a small, non-sensitive sample to check the output.","Open the generated file and confirm that the result is complete and readable.","Scanned pages, complex layouts, embedded fonts, images and encryption can affect what a browser-based conversion can preserve."],
+        documents:["This document utility helps convert or organize office documents and structured data.","Choose a supported document or enter the requested data.","Check the supported file types and the output format.","Run the conversion and open the result to verify it before sharing.","Complex formatting, charts, formulas, macros and embedded objects may not be preserved by lightweight browser conversions."],
+        image:["This image utility helps convert, inspect, resize or compress image files.","Select a supported image and review the available settings.","Try a copy of the original file when quality matters.","Run the operation and check the dimensions, format and output quality.","Lossy compression and format conversion can change visual quality, transparency or metadata."],
+        generators:["This generator creates a result from the values or options you provide.","Set the requested options or enter a short prompt.","Generate a result and review it before using it.","Copy or download the result if it meets your needs.","Generated values are not a substitute for professional review where correctness, privacy or security matters."],
+        converters:["This converter changes a value or file from one supported format to another.","Enter a value or choose a supported source file.","Confirm the intended output format and any formatting assumptions.","Run the conversion and compare the result with the original.","Conversions can depend on encoding, locale, date formats, precision and features supported by the source and target formats."],
+        calculators:["This calculator performs a defined mathematical operation using the values you enter.","Enter the requested values using the indicated units and separators.","Check the formula, units and assumptions used by the calculation.","Run the calculation and review the result before relying on it.","For financial, legal, tax or other consequential decisions, verify the result with an appropriately qualified source."],
+        "date-time":["This date and time utility calculates or interprets dates, times, intervals or timestamps.","Enter the requested date or time in the indicated format.","Check the timezone and the format expected by the tool.","Run the calculation and compare the result with your intended timezone or calendar.","Timezone rules, daylight-saving changes and differences between date formats can affect results."],
+        security:["This utility performs a security-related operation such as analysis, hashing, encoding or decoding.","Use sample or non-sensitive data whenever possible.","Run the operation and read the result carefully.","Confirm the meaning and limitations of the output before making a security decision.","Decoding or analyzing data does not by itself verify authenticity, trustworthiness or security."]
       };
-      const g=groups[current.cat]||["Esta ferramenta oferece uma função digital específica para uma tarefa comum.","Informe os dados ou selecione o arquivo solicitado.","Execute a ferramenta seguindo as instruções.","Revise o resultado antes de utilizá-lo.","O resultado pode depender do formato da entrada, navegador, bibliotecas ou serviços utilizados."];
 
-      const special={
-        "age-calculator":["A Calculadora de Idade calcula anos completos a partir da data de nascimento.","Exemplo: se o aniversário ainda não ocorreu no ano atual, um ano é subtraído do resultado.","O cálculo usa a data do dispositivo; necessidades oficiais podem exigir regras específicas."],
-        "percentage-calculator":["A Calculadora de Porcentagem mostra quanto uma porcentagem representa de determinado valor.","Exemplo: 15% de 200 = 200 × 15 ÷ 100 = 30.","Para aumentos e descontos, confirme qual é a base sobre a qual o percentual deve ser aplicado."],
-        "discount-calculator":["The Discount Calculator shows the discount amount and final price.","Example: $200 with a 15% discount gives a $30 discount and a $170 final price.","Taxes and commercial terms may affect the final amount paid."],
-        "tip-calculator":["The Tip Calculator estimates the tip, total and per-person amount.","Example: $100 with a 10% tip gives a $10 tip and a $110 total.","Check the venue policy and whether a tip has already been included."],
-        "password-generator":["O Gerador de Senhas cria combinações aleatórias para ajudar na criação de senhas longas e variadas.","Gere uma senha, confira o comprimento e use uma combinação diferente em cada serviço.","Para contas importantes, considere um gerenciador de senhas e autenticação multifator."],
-        "jwt-decoder":["O JWT Decoder permite visualizar o header e o payload de um JSON Web Token. Isso não valida a assinatura do token.","Um JWT normalmente possui as partes header.payload.signature.","Tokens podem conter informações legíveis; não cole tokens reais sem compreender os riscos."],
-        "hash-generator":["O gerador calcula um hash SHA-256 para o texto informado.","A mesma entrada produz o mesmo hash; pequenas alterações produzem uma saída diferente.","Hash não é criptografia reversível e não substitui funções apropriadas para armazenamento de senhas."],
-        "qr-code-generator":["O Gerador de QR Code cria uma imagem a partir de texto ou endereço informado.","Cole um endereço completo, como https://example.com, e gere o código para testar.","Esta funcionalidade pode usar um serviço externo para gerar a imagem; não inclua informações secretas."]
+      const special = {
+        "word-counter":["The Word Counter reports word, character, sentence and paragraph counts for text you provide.","Paste a paragraph to compare the word count with the character count, including and excluding spaces.","Counts can vary slightly for hyphenated words, abbreviations and languages that do not separate words with spaces."],
+        "character-counter":["The Character Counter measures total characters and characters without whitespace.","Paste a draft to see how many characters it uses before submitting it to a form or platform.","Different services can count line endings, emoji and Unicode characters differently, so compare with the destination platform when strict limits apply."],
+        "word-to-pdf":["Convert a supported Word document into a downloadable PDF directly in your browser.","Choose a DOCX file, run the conversion and open the PDF that is generated.","This lightweight conversion extracts document text and creates a simple PDF; it does not guarantee that the original page layout, images, tables or advanced formatting will be preserved."],
+        "pdf-to-word":["Extract text from a PDF and package the result in an editable Word DOCX file.","Choose a text-based PDF and download the generated DOCX file after conversion.","The tool focuses on extracting readable text. Columns, page layout, images and tables may not match the original, and scanned PDFs may require OCR."],
+        "word-to-text":["Extract text from a compatible Word document for reuse or review.","Choose a DOCX file and run the tool to view the extracted text.","The result removes most visual formatting and may not include content stored only in images or unsupported embedded objects."],
+        "compress-pdf":["This tool re-saves a PDF using a browser-based PDF library. It is a lightweight optimization attempt, not a guarantee of smaller files.","Compare the downloaded PDF size with the original. Image-heavy PDFs may remain almost the same size.","The current method does not downsample images or perform full raster-based compression, so some files may not get smaller. Keep the original if file size or visual quality is critical."],
+        "merge-pdf":["Combine two or more PDF files into a single PDF in the order you select them.","Choose at least two PDF files, run the tool and open the merged document to check page order.","The tool copies pages without redesigning them. Password-protected, damaged or unusually complex PDFs may fail to load."],
+        "split-pdf":["Split a PDF into separate one-page PDF files delivered in a ZIP archive.","Select a PDF, run the operation and extract the ZIP to access each page separately.","The current tool creates one output PDF per page rather than letting you select arbitrary page ranges."],
+        "jpg-to-pdf":["Turn a supported image file into a PDF document for printing or sharing.","Choose a JPG or another supported image, run the conversion and inspect the page dimensions.","Image-to-PDF conversion places the image on a PDF page; it does not perform OCR or make text within a picture editable."],
+        "pdf-to-jpg":["Render PDF pages as JPG images for preview, sharing or use in other documents.","Choose a PDF and download the image output produced by the tool.","Text can become less crisp at low rendering resolutions, and large multi-page PDFs may require more browser memory."],
+        "excel-to-pdf":["Prepare spreadsheet data as a PDF-style document for sharing or printing.","Choose a supported spreadsheet and review the generated output before sending it.","Spreadsheet conversion may not preserve formulas, charts, print areas, page breaks or complex formatting exactly as desktop Excel does."],
+        "json-formatter":["Validate JSON syntax and format the data with readable indentation.","Paste a JSON object or array and run the formatter to see structured output.","The tool validates JSON syntax; it does not validate your data against a business schema or API contract."],
+        "base64-encoder":["Encode text as Base64 for systems that require this representation.","Paste the text you want to encode and run the operation.","Base64 is an encoding format, not encryption. Do not use it to protect passwords or confidential data."],
+        "base64-decoder":["Decode a valid Base64 string into text when the content uses a compatible text encoding.","Paste a Base64 string and run the decoder to inspect the output.","Binary data, malformed input or a different character encoding may not produce readable text. Decoding does not make data safe."],
+        "image-compressor":["Reduce an image file's size by re-encoding it in the browser with the available image settings.","Choose an image, adjust the quality if an option is available and compare the output with the original.","Compression quality depends on the file format and image content. Keep the original and inspect small text, transparency and image details."],
+        "qr-code-generator":["Create a QR code from text or a URL so another device can scan it.","Enter a complete URL such as https://globaltoolsnow.com/ or a short text message and generate the code.","The QR image is generated through an external QR service. Do not include passwords, private data, payment details or confidential URLs in the content."],
+        "percentage-calculator":["Calculate a percentage of a value using the standard formula: value × percentage ÷ 100.","For example, 15% of 200 is 30 because 200 × 15 ÷ 100 = 30.","Make sure you know which value is the base and whether you need a percentage amount, a percentage change or a final value after a change."],
+        "discount-calculator":["Calculate a discount amount and the resulting price from an original price and a discount rate.","For example, a 15% discount on $200 is $30, giving a before-tax price of $170.","Taxes, shipping, coupons and store rules may change the amount charged at checkout."],
+        "age-calculator":["Calculate age in completed years from a date of birth and the current date on your device.","If a person was born on 10 December and today is 1 October of the same numbered year, their birthday has not occurred yet for that year.","Official, legal or medical contexts can use specific date-counting rules; verify those requirements when relevant."],
+        "password-generator":["Generate a random password using a mixture of letters, numbers and symbols supported by the tool.","Generate a password, review its length and use a different password for each service.","Store generated passwords in a trusted password manager and enable multi-factor authentication where possible."],
+        "jwt-decoder":["Display the header and payload sections of a JSON Web Token for inspection.","Paste a test JWT and review the decoded header and claims.","Decoding does not verify a signature or prove that a token is valid. Never paste a live access token or secret token into an untrusted environment."],
+        "hash-generator":["Calculate a SHA-256 hash from the text entered in the tool.","Enter a sample phrase and compare its hexadecimal digest with another SHA-256 implementation.","A hash is not reversible encryption and SHA-256 alone is not an appropriate password-storage scheme."],
       };
       const sp=special[slug];
       const purpose=sp?sp[0]:g[0], example=sp?sp[1]:"Comece com uma entrada curta e não sensível para conferir o comportamento antes de processar conteúdo importante.", notes=sp?sp[2]:g[4];
@@ -380,7 +416,7 @@ const server = http.createServer((req, res) => {
         ["O que é "+name+"?",desc+" A ferramenta está disponível online para realizar essa tarefa sem instalar um programa específico."],
         ["Como usar "+name+"?","Informe os dados ou selecione o arquivo solicitado, execute a ferramenta e confira o resultado."],
         ["Do I need to create an account?","No. The core GlobalTools tools are designed to work without an account."],
-        ["Meus dados ficam no servidor?","Quando o processamento local é tecnicamente possível, a operação ocorre no navegador. Algumas funcionalidades dependem de bibliotecas ou serviços externos."]
+        ["Is my data uploaded to the server?","When local processing is supported, the task runs in your browser. Some tools load external libraries or send the input needed for a third-party service; review the tool-specific notes before submitting sensitive data."]
       ];
       const faqHtml=faq.map(x=>'<div><h3>'+safe(x[0])+'</h3><p>'+safe(x[1])+'</p></div>').join('');
       const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
@@ -399,7 +435,7 @@ const server = http.createServer((req, res) => {
         '<body><header class="site-header"><a class="brand" href="/"><span class="brand-mark">G</span>GlobalTools</a><nav class="main-nav"><a href="/">Tools</a><a href="/#categories">Categories</a><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><label class="language-switcher"><span>🌐</span><select id="languageSelect"><option value="en" selected>English</option><option value="pt">Português</option><option value="es">Español</option><option value="fr">Français</option></select></label></nav></header>',
         '<main class="tool-page"><div class="breadcrumbs"><a href="/">Home</a> / '+safe(name)+'</div><section class="tool-hero"><div class="tool-kicker">GLOBALTOOLS • ONLINE TOOL</div><h1>'+safe(name)+'</h1><p class="intro">'+safe(desc)+'</p></section>',
         '<div class="tool-workspace"><div id="tool" class="tool-box"><div id="dropZone" class="upload-visual file-upload-visual"><div class="upload-icon">↥</div><h2>Select files</h2><p>or drag and drop files here</p></div><textarea id="input" aria-label="'+safe(name)+'" placeholder="Enter or paste your data..."></textarea><button id="action" class="btn primary-action">Run tool</button><div id="result" class="result">Your result will appear here.</div></div>',
-        '<aside class="tool-side"><div class="side-card"><strong>Private when possible</strong><p>Processing happens in your browser whenever the technology allows.</p></div><div class="side-card"><strong>Grátis</strong><p>The core tools do not require an account.</p></div><div class="side-card"><strong>Clear guidance</strong><p>Review examples and limitations before using the result for an important task.</p></div></aside></div>',
+        '<aside class="tool-side"><div class="side-card"><strong>Private when possible</strong><p>Processing happens in your browser whenever the technology allows.</p></div><div class="side-card"><strong>Free to use</strong><p>The core tools do not require an account.</p></div><div class="side-card"><strong>Clear guidance</strong><p>Review examples and limitations before using the result for an important task.</p></div></aside></div>',
         '<section class="info"><h2>About '+safe(name)+'</h2><p>'+safe(purpose)+'</p><h2>How to use</h2><ol>'+steps+'</ol><h2>Practical example</h2><p>'+safe(example)+'</p><h2>Limitations and precautions</h2><p>'+safe(notes)+'</p><h2>Frequently asked questions</h2><div class="faq">'+faqHtml+'</div>',
         related.length?'<h2>Related tools</h2><div class="related-tools">'+relatedHtml+'</div>':'',
         '<h2>Privacy and processing</h2><p>GlobalTools prioritizes in-browser processing whenever technically possible. For details about cookies, advertising, analytics and external services, read our <a href="/privacy.html">Privacy Policy</a>. For questions or bug reports, use the <a href="/contato.html">contact page</a>.</p></section></main>',
@@ -430,7 +466,13 @@ const server = http.createServer((req, res) => {
     let html = fs.readFileSync(finalPath, "utf8");
     html = html.replaceAll("G-DM7CKZRD30", "G-061NQ52GBQ");
     html = html.replaceAll("https://globaltools-international.example", siteUrl(req));
-    if (!html.includes("pagead2.googlesyndication.com/pagead/js/adsbygoogle.js")) {
+    const noAdsPage = urlPath === "/login.html" ||
+      urlPath === "/account.html" ||
+      urlPath === "/account-success.html" ||
+      /\/products\/[^/]+-success\.html$/i.test(urlPath);
+    if (noAdsPage) {
+      html = html.replace(/<script\b[^>]*src=["']https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js[^"']*["'][^>]*>\s*<\/script>/gi, "");
+    } else if (!html.includes("pagead2.googlesyndication.com/pagead/js/adsbygoogle.js")) {
       html = html.replace(/<head>/i, '<head><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>');
     }
     html = html.replace(/\/styles\.css\?v=[^"'\\s]+/g, "/styles.css?v=20261013-02")
