@@ -98,7 +98,7 @@ const server = http.createServer((req, res) => {
   if (urlPath === "/robots.txt") {
     const base = siteUrl(req);
     res.writeHead(200, {"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-cache"});
-    return res.end("User-agent: *\\nAllow: /\\nSitemap: " + base + "/sitemap.xml\\n");
+    return res.end("User-agent: *\nAllow: /\nSitemap: " + base + "/sitemap.xml\n");
   }
 
   if (urlPath === "/sitemap.xml") {
@@ -112,7 +112,7 @@ const server = http.createServer((req, res) => {
     ];
     try {
       const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
-      const slugs = Array.from(appSource.matchAll(/\\{slug:"([^"]+)",name:/g), match => match[1]);
+      const slugs = Array.from(appSource.matchAll(/\{slug:"([^"]+)",name:/g), match => match[1]);
       slugs.forEach(slug => pages.push("/tools/" + slug + ".html"));
     } catch (err) {
       console.error("[GlobalTools sitemap]", err.message);
