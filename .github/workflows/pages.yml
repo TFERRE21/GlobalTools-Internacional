@@ -146,6 +146,13 @@ jobs:
           PY
           curl -fsS http://127.0.0.1:3500/tools/compress-pdf.html -o /tmp/compress-pdf.html
           grep -F 'This tool re-saves a PDF using a browser-based PDF library.' /tmp/compress-pdf.html
+          # Avoid loading gtag.js twice on tool pages; one library load configures both GA4 and Google Ads.
+          test "$(grep -o 'googletagmanager.com/gtag/js?id=' /tmp/compress-pdf.html | wc -l)" -eq 1
+          grep -F 'gtag("config","G-061NQ52GBQ");gtag("config","AW-17240722145");' /tmp/compress-pdf.html
+          if grep -F 'language.js?v=20261013-03' /tmp/compress-pdf.html; then
+            echo "Tool pages should use native localized links instead of the translation loader"
+            exit 1
+          fi
           curl -fsS http://127.0.0.1:3500/account.html -o /tmp/account.html
           if grep -F 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/account.html; then
             echo "AdSense must not load on account pages"
