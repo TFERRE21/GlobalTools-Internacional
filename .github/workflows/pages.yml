@@ -106,7 +106,7 @@ jobs:
           grep -F '<html lang="pt-BR">' /tmp/word-to-pdf-pt.html
           grep -F '<title>Word para PDF | GlobalTools</title>' /tmp/word-to-pdf-pt.html
           grep -F 'href="https://globaltoolsnow.com/pt/tools/word-to-pdf.html"' /tmp/word-to-pdf-pt.html
-          grep -F 'Extrae el texto de un PDF' /tmp/pdf-to-word-es.html
+          grep -F 'Extrae texto de un PDF' /tmp/pdf-to-word-es.html
           grep -F 'La méthode actuelle ne réduit pas la résolution' /tmp/compress-pdf-fr.html
           # Sitemap must be valid XML and list the localized routes with language alternates.
           curl -fsS http://127.0.0.1:3500/sitemap.xml -o /tmp/sitemap.xml
