@@ -421,6 +421,9 @@ const server = http.createServer((req, res) => {
     let html = fs.readFileSync(finalPath, "utf8");
     html = html.replaceAll("G-DM7CKZRD30", "G-061NQ52GBQ");
     html = html.replaceAll("https://globaltools-international.example", siteUrl(req));
+    if (!html.includes("pagead2.googlesyndication.com/pagead/js/adsbygoogle.js")) {
+      html = html.replace(/<head>/i, '<head><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>');
+    }
     html = html.replace(/\/styles\.css\?v=[^"'\\s]+/g, "/styles.css?v=20261013-02")
       .replace(/\/app\.js\?v=[^"'\\s]+/g, "/app.js?v=20261013-02")
       .replace(/\/language\.js\?v=[^"'\\s]+/g, "/language.js?v=20261013-02")
