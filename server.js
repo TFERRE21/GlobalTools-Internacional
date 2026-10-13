@@ -491,7 +491,7 @@ const server = http.createServer((req, res) => {
         .map(([lang,label,href]) => '<a href="'+href+'" hreflang="'+lang+'">'+label+'</a>').join(' · ');
       const homePath = locale === "en" ? "/" : "/" + locale + "/";
       const contactHint = locale === "pt" ? "Para perguntas ou problemas, use o " : locale === "es" ? "Para preguntas o problemas, utiliza la página de " : locale === "fr" ? "Pour toute question ou tout problème, utilisez la page de " : "For questions or bug reports, use the ";
-      const html=[      const html=[
+      const html=[
         '<!doctype html><html lang="'+htmlLang+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
         '<title>'+safe(pageTitle)+'</title>',
         '<meta name="description" content="'+safe(metaDescription)+'">',
