@@ -1,0 +1,545 @@
+<!doctype html>
+<!-- GlobalTools runtime refresh: 2026-10-07T13:00Z -->
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GlobalTools Finance — Painel</title>
+<style>
+:root{--bg:#080a0d;--panel:#11151b;--panel2:#171c23;--line:#29313b;--text:#f4f7fb;--muted:#9ca6b5;--green:#32d583;--red:#ff6672;--blue:#62a8ff;--gold:#f4c95d;--input:#0c1015}
+body.light{--bg:#f3f5f8;--panel:#fff;--panel2:#f7f9fb;--line:#d9e0e8;--text:#17202b;--muted:#687384;--green:#159a5b;--red:#d63b4b;--blue:#2878d0;--gold:#a97800;--input:#fff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px Arial,sans-serif}
+/* Click safety: dashboard must stay above support/injected layers; support remains above the dashboard only in its own corner. */
+.layout{position:relative;z-index:auto}.sidebar{z-index:10001!important;pointer-events:auto!important}.main{position:relative;z-index:10000!important;pointer-events:auto!important}.nav,.nav button,.topbar,.actions,.panel,.toolbar,.period-tabs,.period-tabs button,.main button,.main select,.main input,.main textarea{pointer-events:auto!important}.nav button,.main button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}.gt-chat{z-index:20000!important}.gt-modal{z-index:30000!important}
+body{background:radial-gradient(circle at top right,rgba(50,213,131,.06),transparent 32%),var(--bg)}
+button,input,select,textarea{font:inherit}button{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:9px 13px;font-weight:700;cursor:pointer}button:hover{filter:brightness(1.08)}button:disabled{opacity:.5;cursor:not-allowed}
+.btn-green{background:var(--green);color:#06140d;border-color:var(--green)}.btn-danger{background:transparent;color:var(--red);border-color:var(--red)}.btn-small{padding:6px 9px;font-size:12px}.icon-btn{padding:8px 10px}
+.layout{display:flex;min-height:100vh}.sidebar{width:250px;position:sticky;top:0;height:100vh;overflow:auto;background:var(--panel);border-right:1px solid var(--line);padding:18px 13px;z-index:100}.nav,.nav button,.topbar,.actions{position:relative;z-index:101}.nav button{pointer-events:auto}.modal:not(.show),.toast:not(.show){pointer-events:none}.brand{font-size:21px;font-weight:900;margin:4px 8px 20px}.brand span{color:var(--green)}.nav .group{margin:17px 8px 6px;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:900;letter-spacing:.09em}.nav button{display:block;width:100%;border:0;background:transparent;text-align:left;color:var(--muted);margin:2px 0;padding:10px 11px}.nav button.active,.nav button:hover{background:var(--panel2);color:var(--text)}
+.main{flex:1;min-width:0;max-width:1700px;margin:auto;padding:22px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px}.topbar h1{margin:0;font-size:25px}.user{color:var(--muted);margin-top:5px}.actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.page{display:none}.page.active{display:block}
+.notice{padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--muted);margin-bottom:12px}.notice.error{color:var(--red)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px}.kpi .label{font-size:11px;color:var(--muted)}.kpi .value{font-size:24px;font-weight:900;margin-top:7px}.kpi .sub{font-size:11px;color:var(--muted);margin-top:5px}.positive{color:var(--green)}.negative{color:var(--red)}.gold{color:var(--gold)}.blue{color:var(--blue)}
+.grid2{display:grid;grid-template-columns:1.35fr .9fr;gap:14px;margin-top:14px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}.panel h2{font-size:16px;margin:0 0 12px}.panel h3{font-size:14px;margin:0 0 10px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}.toolbar .left,.toolbar .right{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.form .wide{grid-column:span 2}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px;outline:none}.field textarea{min-height:90px;resize:vertical}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:760px}.table th,.table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.table th{font-size:10px;color:var(--muted);text-transform:uppercase}.empty{color:var(--muted);padding:18px;text-align:center}.tag{display:inline-block;padding:4px 7px;border-radius:20px;background:var(--panel2);font-size:11px}.bar{height:8px;background:var(--panel2);border-radius:20px;overflow:hidden}.bar i{display:block;height:100%;background:var(--green);border-radius:20px}.progress-row{margin:11px 0}.progress-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px}.mini{font-size:11px;color:var(--muted)}.canvas{width:100%;height:260px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}.search{min-width:220px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:20px;z-index:50000!important;pointer-events:auto!important}.modal.show{display:flex}.modalbox{width:min(780px,96vw);max-height:90vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}.modalhead{display:flex;justify-content:space-between;align-items:center}.toast{position:fixed;right:20px;bottom:20px;background:var(--panel);border:1px solid var(--line);padding:12px 16px;border-radius:10px;display:none;z-index:50001!important;box-shadow:0 10px 30px rgba(0,0,0,.25)}.toast.show{display:block}.small-note{font-size:11px;color:var(--muted)}.locked{opacity:.6}.period-panel{margin-top:14px}.period-tabs{display:flex;gap:7px;flex-wrap:wrap}.period-tabs button.active{background:var(--green);color:#06140d;border-color:var(--green)}.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:11px}.metric-card{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px}.metric-card .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.metric-card .value{font-size:19px;font-weight:900;margin-top:5px}.metric-card .sub{font-size:10px;color:var(--muted);margin-top:4px}.safe{color:var(--green)!important}.critical{color:var(--red)!important}@media(max-width:1050px){.metric-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.metric-grid{grid-template-columns:1fr 1fr}}.report-actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:1050px){.sidebar{width:215px}.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.form{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.layout{display:block}.sidebar{width:100%;height:auto;position:relative}.nav{display:flex;overflow:auto}.nav .group{display:none}.nav button{min-width:max-content}.main{padding:13px}.topbar{flex-direction:column;align-items:flex-start}.cards{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}.form .wide{grid-column:auto}}
+.sidebar-account{margin:18px 5px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}.sidebar-account .mini{margin-bottom:5px}.sidebar-account strong{display:block;font-size:15px;margin-bottom:9px}.sidebar-account button{width:100%}.subscription-head{display:flex;justify-content:space-between;align-items:center;gap:15px}.subscription-current{min-width:150px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:var(--panel2)}.subscription-current strong{display:block;font-size:18px;margin-top:4px}.plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}.plan-card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;position:relative}.plan-card.current{border:2px solid var(--green)}.plan-card h3{font-size:18px;margin:0 0 5px}.plan-price{font-size:27px;font-weight:900;margin:10px 0}.plan-price span{font-size:12px;color:var(--muted);font-weight:400}.plan-card ul{padding-left:18px;color:var(--muted);min-height:92px}.plan-card li{margin:6px 0}.plan-card .btn-green{width:100%}.plan-badge{position:absolute;right:12px;top:12px;padding:4px 7px;border-radius:20px;background:var(--green);color:#06140d;font-size:10px;font-weight:900}@media(max-width:850px){.plan-grid{grid-template-columns:1fr}.subscription-head{align-items:flex-start;flex-direction:column}}.account-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.account-grid>div{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:14px;min-height:72px}.account-grid strong{display:block;margin-top:6px;word-break:break-word}@media(max-width:900px){.account-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.account-grid{grid-template-columns:1fr}}</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="brand">Global<span>Tools</span> Finance</div>
+  <div class="nav">
+    <div class="group">Visão geral</div>
+    <button class="active" data-page="dashboard">▦ Dashboard</button>
+    <button data-page="transactions">↕ Transações</button>
+    <button data-page="accounts">▣ Contas</button>
+    <button data-page="cards">▤ Cartões</button>
+    <div class="group">Planejamento</div>
+    <button data-page="budget">◫ Orçamento</button>
+    <button data-page="bills">◷ Contas a pagar/receber</button>
+    <button data-page="goals">◎ Metas</button>
+    <button data-page="debts">↘ Dívidas</button>
+    <div class="group">Patrimônio</div>
+    <button data-page="investments">◆ Investimentos</button>
+    <button data-page="networth">◇ Patrimônio líquido</button>
+    <div class="group">Gestão</div>
+    <button data-page="reports">▥ Relatórios</button>
+    <button data-page="projects">▤ Projetos / Centros de custo</button>
+    <button data-page="contacts">♙ Clientes / Fornecedores</button>
+    <button data-page="documents">▤ Documentos</button>
+    <div class="group">Ferramentas</div>
+    <button data-page="import">⇩ Importar / Exportar</button>
+    <button data-page="assistant">✦ Insights</button>
+    <div class="group">Conta</div>
+    <button data-page="subscription">◉ Plano e assinatura</button>
+    <button data-page="settings">⚙ Configurações</button>
+  </div>
+  <div class="sidebar-account">
+    <div class="mini">PLANO ATUAL</div>
+    <strong id="sidePlan">—</strong>
+    <button id="sidePlanBtn" class="btn-green">Alterar plano</button>
+  </div>
+</aside>
+<main class="main">
+  <div class="topbar">
+    <div><h1 id="pageTitle">Dashboard financeiro</h1><div id="who" class="user">Validando seu acesso...</div></div>
+    <div class="actions">
+      <select id="langTop" class="icon-btn" aria-label="Language"><option value="English">🇺🇸 English</option><option value="Português">🇧🇷 Português</option><option value="Español">🇪🇸 Español</option><option value="Français">🇫🇷 Français</option></select><button id="themeBtn" class="icon-btn">☀ Light theme</button>
+      <button id="saveTop">Salvar</button>
+      <button id="newTx" class="btn-green">+ Lançamento</button>
+      <button id="upgrade" class="btn-green">Plano</button>
+      <button id="logout">Sair</button>
+    </div>
+  </div>
+
+  <section id="dashboard" class="page active">
+    <div id="dashNotice" class="notice">Carregando seus dados financeiros...</div><div class="panel period-panel"><div class="toolbar"><div><h2>Visão financeira por período</h2><div class="small-note">Saldo real + entradas − saídas + compromissos futuros.</div></div><div class="period-tabs" id="periodTabs"><button data-period="today">Hoje</button><button data-period="7d">7 dias</button><button data-period="week">Semana</button><button data-period="30d">30 dias</button><button data-period="month" class="active">Mês</button><button data-period="3m">3 meses</button><button data-period="6m">6 meses</button><button data-period="year">Ano</button></div></div><div class="metric-grid" id="periodMetrics"></div><div class="grid2" style="margin-top:12px"><div class="metric-card"><div class="label">Quanto posso gastar</div><div id="spendLimit" class="value">—</div><div id="spendLimitSub" class="sub">Considerando contas futuras e reserva.</div></div><div class="metric-card"><div class="label">Saldo mínimo projetado</div><div id="minProjected" class="value">—</div><div id="criticalDate" class="sub">Sem projeção.</div></div></div></div>
+    <div class="cards" id="kpis"></div>
+    <div class="grid2">
+      <div class="panel"><div class="toolbar"><h2>Fluxo de caixa — últimos 6 meses</h2><span class="tag" id="cashStatus">—</span></div><canvas id="cashChart" class="canvas"></canvas></div>
+      <div class="panel"><div class="toolbar"><h2>Despesas por categoria</h2><button class="btn-small" onclick="go('reports')">Ver relatório</button></div><canvas id="catChart" class="canvas"></canvas></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><div class="toolbar"><h2>Próximos vencimentos</h2><button class="btn-small" onclick="go('bills')">Ver contas</button></div><div id="upcoming"></div></div>
+      <div class="panel"><div class="toolbar"><h2>Metas em andamento</h2><button class="btn-small" onclick="go('goals')">Ver metas</button></div><div id="goalSummary"></div></div>
+    </div>
+    <div class="panel"><div class="toolbar"><h2>Ações rápidas</h2></div><div class="row"><button class="btn-green" onclick="openTx()">+ Receita/Despesa</button><button onclick="addAccount()">+ Conta</button><button onclick="addCard()">+ Cartão</button><button onclick="addBill()">+ Conta a pagar/receber</button><button onclick="addGoal()">+ Meta</button><button onclick="go('reports')">▥ Relatórios</button></div></div>
+  </section>
+
+  <section id="transactions" class="page">
+    <div class="panel"><div class="toolbar"><h2>Lançamentos</h2><div class="right"><input class="search" id="txSearch" placeholder="Buscar descrição/categoria"><select id="txFilter"><option value="all">Todos</option><option value="income">Receitas</option><option value="expense">Despesas</option><option value="transfer">Transferências</option></select><button class="btn-green" id="newTx2">+ Novo</button></div></div>
+    <div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Conta</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="txTable"></tbody></table></div></div>
+  </section>
+
+  <section id="accounts" class="page"><div class="panel"><div class="toolbar"><h2>Contas e saldos</h2><button class="btn-green" id="addAccount">+ Nova conta</button></div><div class="cards" id="accountCards"></div><div class="table-wrap"><table class="table"><thead><tr><th>Conta</th><th>Tipo</th><th>Moeda</th><th>Saldo inicial</th><th>Ações</th></tr></thead><tbody id="accountsTable"></tbody></table></div></div></section>
+
+  <section id="cards" class="page"><div class="panel"><div class="toolbar"><h2>Cartões de crédito</h2><button class="btn-green" id="addCard">+ Novo cartão</button></div><div class="cards" id="creditCards"></div><div class="table-wrap"><table class="table"><thead><tr><th>Cartão</th><th>Limite</th><th>Fatura</th><th>Fechamento</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody id="cardsTable"></tbody></table></div></div></section>
+
+  <section id="budget" class="page"><div class="panel"><div class="toolbar"><h2>Orçamento mensal</h2><div class="right"><input type="month" id="budgetMonth"><button class="btn-green" id="addBudget">+ Limite</button></div></div><div id="budgetList"></div></div></section>
+
+  <section id="bills" class="page"><div class="panel"><div class="toolbar"><h2>Contas a pagar e receber</h2><button class="btn-green" id="addBill">+ Nova conta</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Vencimento</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Recorrência</th><th>Ações</th></tr></thead><tbody id="billsTable"></tbody></table></div></div></section>
+
+  <section id="goals" class="page"><div class="panel"><div class="toolbar"><h2>Metas financeiras</h2><button class="btn-green" id="addGoal">+ Nova meta</button></div><div id="goalsList"></div></div></section>
+
+  <section id="debts" class="page"><div class="panel"><div class="toolbar"><h2>Controle de dívidas</h2><button class="btn-green" id="addDebt">+ Nova dívida</button></div><div class="cards" id="debtKpis"></div><div class="table-wrap"><table class="table"><thead><tr><th>Dívida</th><th>Saldo</th><th>Juros</th><th>Parcela</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody id="debtsTable"></tbody></table></div></div></section>
+
+  <section id="investments" class="page"><div class="notice">Carteira preparada para ações, FIIs, ETFs, fundos, renda fixa, Tesouro, cripto, moedas, imóveis e ativos internacionais. Os preços atuais são informados pelo usuário até conectarmos uma fonte de cotações.</div><div class="panel"><div class="toolbar"><h2>Carteira de investimentos</h2><button class="btn-green" id="addInvestment">+ Ativo</button></div><div class="cards" id="investKpis"></div><div class="table-wrap"><table class="table"><thead><tr><th>Ativo</th><th>Ticker</th><th>Tipo</th><th>Qtd.</th><th>Preço médio</th><th>Preço atual</th><th>Valor</th><th>Rentabilidade</th><th>Ações</th></tr></thead><tbody id="investTable"></tbody></table></div></div></section>
+
+  <section id="networth" class="page"><div class="panel"><h2>Patrimônio líquido</h2><div class="cards" id="netKpis"></div><canvas id="netChart" class="canvas"></canvas></div><div class="grid2"><div class="panel"><h2>Ativos</h2><div id="assetList"></div></div><div class="panel"><h2>Passivos</h2><div id="liabilityList"></div></div></div></section>
+
+  <section id="reports" class="page">
+    <div class="panel">
+      <div class="toolbar"><div><h2>Relatórios financeiros</h2><div class="small-note">DRE simplificada, fluxo de caixa, categorias, orçamento e evolução mensal.</div></div><div class="report-actions"><input type="month" id="reportMonth"><button id="refreshReport">Atualizar</button><button id="exportReport">Exportar CSV</button><button id="printReport">Imprimir/PDF</button></div></div>
+      <div class="cards" id="reportKpis"></div>
+      <div class="grid2"><div class="panel"><h3>Receitas x despesas</h3><canvas id="reportCashChart" class="canvas"></canvas></div><div class="panel"><h3>Top categorias</h3><div id="reportCats"></div></div></div>
+      <div class="panel"><h3>DRE / resumo do período</h3><div class="table-wrap"><table class="table"><thead><tr><th>Mês</th><th>Receitas</th><th>Despesas</th><th>Resultado</th><th>Poupança</th></tr></thead><tbody id="monthlyTable"></tbody></table></div></div>
+    </div>
+  </section>
+
+  <section id="projects" class="page"><div class="panel"><div class="toolbar"><h2>Projetos e centros de custo</h2><button class="btn-green" id="addProject">+ Projeto</button></div><div id="projectsList"></div></div></section>
+
+  <section id="contacts" class="page"><div class="panel"><div class="toolbar"><h2>Clientes, fornecedores e favorecidos</h2><button class="btn-green" id="addContact">+ Contato</button></div><div class="table-wrap"><table class="table"><thead><tr><th>Nome</th><th>Tipo</th><th>E-mail</th><th>Telefone</th><th>Ações</th></tr></thead><tbody id="contactsTable"></tbody></table></div></div></section>
+
+  <section id="documents" class="page"><div class="panel"><h2>Documentos e comprovantes</h2><div class="notice">Estrutura preparada para vincular comprovantes aos lançamentos. O armazenamento de arquivos será conectado ao backend de documentos.</div><div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Descrição</th><th>Referência</th><th>Observação</th></tr></thead><tbody id="docsTable"></tbody></table></div></div></section>
+
+  <section id="import" class="page"><div class="grid2"><div class="panel"><h2>Importar CSV / OFX</h2><p class="small-note">CSV: date,description,type,amount,category,account,status. OFX básico também é aceito.</p><textarea id="importBox" placeholder="Cole aqui o CSV ou OFX..."></textarea><div class="row" style="margin-top:9px"><button class="btn-green" id="doImport">Importar</button><button id="clearImport">Limpar</button></div></div><div class="panel"><h2>Exportar / backup</h2><p class="small-note">Faça backup dos dados do painel a qualquer momento.</p><div class="row"><button class="btn-green" id="exportAll">Exportar JSON</button><button id="exportTx">Exportar transações CSV</button></div></div></div></section>
+
+  <section id="assistant" class="page"><div class="panel"><h2>Insights financeiros</h2><div id="insights"></div></div><div class="grid2"><div class="panel"><h2>Saúde financeira</h2><div id="health"></div></div><div class="panel"><h2>Próximas ações</h2><div id="actions"></div></div></div></section>
+
+  <section id="subscription" class="page">
+  <div class="panel subscription-head">
+    <div><h2>Plano e assinatura</h2><div class="small-note">Escolha o nível do GlobalTools Finance. O pagamento é realizado com segurança pelo Stripe.</div></div>
+    <div class="subscription-current"><span class="mini">Plano atual</span><strong id="subscriptionCurrent">—</strong></div>
+  </div>
+  <div class="plan-grid" id="planGrid"></div>
+  <div class="panel">
+    <div class="toolbar"><div><h3>Pagamento e assinatura</h3><div class="small-note">Para uma assinatura já ativa, use o portal para alterar plano ou forma de pagamento.</div></div><button id="billingPortal" class="btn-green">Gerenciar assinatura / pagamento</button></div>
+  </div>
+</section>
+
+<section id="settings" class="page">
+<div class="panel"><div class="toolbar"><div><h2>Dados da conta</h2><div class="small-note">Informações do seu acesso ao GlobalTools Finance.</div></div><span class="tag" id="accountStatus">Ativa</span></div>
+<div class="account-grid">
+  <div><div class="mini">E-mail</div><strong id="accountEmail">—</strong></div>
+  <div><div class="mini">Plano</div><strong id="accountPlan">—</strong></div>
+  <div><div class="mini">Produtos liberados</div><strong id="accountProducts">—</strong></div>
+  <div><div class="mini">Status da assinatura</div><strong id="accountSubscription">—</strong></div>
+</div></div>
+<div class="panel"><h2>Segurança</h2><div class="form">
+  <div class="field"><label>Senha atual</label><input id="currentPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha atual"></div>
+  <div class="field"><label>Nova senha</label><input id="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></div>
+  <div class="field"><label>Confirmar nova senha</label><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Repita a nova senha"></div>
+</div><div class="row" style="margin-top:12px"><button class="btn-green" id="changePassword">Alterar senha</button></div><div id="passwordNotice" class="small-note" style="margin-top:10px"></div></div>
+<div class="panel"><h2>Configurações</h2><div class="form"><div class="field"><label>Moeda principal</label><select id="setCurrency"><option>BRL</option><option>USD</option><option>EUR</option><option>GBP</option></select></div><div class="field"><label>Idioma</label><select id="setLang"><option>English</option><option>Português</option><option>Español</option><option>Français</option></select></div><div class="field"><label>Dia de fechamento</label><input id="setClose" type="number" min="1" max="31"></div><div class="field"><label>Reserva de emergência (meses)</label><input id="setReserve" type="number" min="0" step=".5"></div><div class="field wide"><label>Nome do orçamento</label><input id="setBudgetName"></div></div><div class="row" style="margin-top:12px"><button class="btn-green" id="saveSettings">Salvar configurações</button><button id="resetTheme">Voltar ao tema escuro</button></div></div><div class="panel"><h2>Produtos liberados</h2><div id="products"></div></div></section>
+</main>
+</div>
+<div id="modal" class="modal"><div class="modalbox"><div class="modalhead"><h2 id="modalTitle">Novo registro</h2><button id="modalClose">Fechar</button></div><div id="modalBody"></div></div></div>
+<div id="toast" class="toast"></div>
+<script>
+(function(){
+  function activate(b){
+    if(!b)return false;
+    var p=b.getAttribute("data-page"),page=document.getElementById(p);
+    if(!page)return false;
+    document.querySelectorAll(".nav button[data-page]").forEach(function(x){x.classList.toggle("active",x===b)});
+    document.querySelectorAll(".page").forEach(function(x){x.classList.remove("active")});
+    page.classList.add("active");
+    var title=document.getElementById("pageTitle");
+    if(title)title.textContent=b.textContent.replace(/^[^A-Za-zÀ-ÿ]+/,"").trim();
+    try{if(window.DATA&&typeof window.renderPage==="function")window.renderPage(p)}catch(err){console.error("[GlobalTools navigation]",err)}
+    try{if(typeof window.applyLanguage==="function")window.applyLanguage((window.DATA&&window.DATA.settings&&window.DATA.settings.language)||"English")}catch(err){console.error("[GlobalTools language]",err)}
+    return true;
+  }
+  window.__gtGo=function(p){
+    var b=document.querySelector('.nav button[data-page="'+p+'"]');
+    return activate(b);
+  };
+  document.querySelectorAll(".nav button[data-page]").forEach(function(b){
+    b.onclick=function(e){e.preventDefault();e.stopPropagation();activate(b);};
+  });
+  /* Dashboard controls are bound by the main runtime below. Do not shadow those handlers here. */
+  /* Navigation only: content controls use their own runtime handlers. */
+})();
+</script>
+<script>
+let ME=null,DATA=null,currentModalSave=null;
+const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])), uid=p=>(p||"id")+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7), today=()=>new Date().toISOString().slice(0,10), month=d=>String(d||"").slice(0,7);
+const sum=(a,f)=>a.reduce((n,x)=>n+(Number(f(x))||0),0);
+function money(n,c){return new Intl.NumberFormat(c==="USD"?"en-US":c==="EUR"?"de-DE":c==="GBP"?"en-GB":"en-US",{style:"currency",currency:c||"USD"}).format(Number(n)||0)}
+function baseData(d){d=d&&typeof d==="object"?d:{};return Object.assign({transactions:[],accounts:[],cards:[],budgets:[],bills:[],goals:[],investments:[],debts:[],projects:[],contacts:[],documents:[],categories:["Moradia","Alimentação","Transporte","Saúde","Educação","Lazer","Assinaturas","Impostos","Compras","Investimentos","Outros"],settings:{currency:"USD",language:"English",closeDay:10,reserveMonths:6,budgetName:"My budget",theme:"dark"}},d)}
+async function api(u,o={}){const c=new AbortController();const t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(u,{...o,credentials:"same-origin",cache:"no-store",signal:c.signal});let j={};try{j=await r.json()}catch{}return{r,j}}catch(e){return{r:{ok:false,status:0},j:{ok:false,error:e.name==="AbortError"?"Tempo esgotado. Tente novamente.":"Falha de conexão com o servidor."}}}finally{clearTimeout(t)}}
+function toast(s){$("toast").textContent=s;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2400)}
+const LOCAL_DATA_KEY="gt_finance_backup_v2";
+function cacheLocalData(){try{if(DATA)localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(DATA))}catch(e){console.warn("[GlobalTools local backup]",e)}}
+function loadLocalData(){try{const x=JSON.parse(localStorage.getItem(LOCAL_DATA_KEY)||"null");return x&&typeof x==="object"?baseData(x):null}catch{return null}}
+function hasUserData(d){if(!d)return false;return ["transactions","accounts","cards","budgets","bills","goals","investments","debts","projects","contacts","documents"].some(k=>Array.isArray(d[k])&&d[k].length)}
+async function saveData(silent=false){
+  if(!DATA)return false;
+  cacheLocalData();
+  const x=await api("/api/finance/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:DATA})});
+  if(!x.r.ok){toast(x.j.error||"Erro ao salvar — cópia local mantida");return false}
+  if(x.j.data)DATA=baseData(x.j.data);
+  cacheLocalData();
+  if(!silent)toast("Dados salvos com sucesso");
+  return true
+}
+function applyTheme(theme){document.body.classList.toggle("light",theme==="light");$("themeBtn").textContent=theme==="light"?"☾ Tema escuro":"☀ Tema claro";localStorage.setItem("gt_theme",theme);if(DATA&&DATA.settings)DATA.settings.theme=theme}
+function go(p){const page=$(p);if(!page){toast("Seção indisponível.");return}document.querySelectorAll(".nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===p));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));page.classList.add("active");const b=document.querySelector('.nav button[data-page="'+p+'"]');$("pageTitle").textContent=b?b.textContent.replace(/^[^ ]+ /,""):"Dashboard";if(DATA)renderPage(p);applyLanguage(DATA?.settings?.language||"English")}
+function nav(){document.querySelectorAll(".nav button[data-page]").forEach(b=>{b.onclick=function(e){e.preventDefault();e.stopPropagation();go(b.dataset.page)}})}
+function modal(title,html,save){$("modalTitle").textContent=title;$("modalBody").innerHTML=html;$("modal").classList.add("show");currentModalSave=save}
+$("modalClose").onclick=()=>$("modal").classList.remove("show");
+function input(n,l,t="text",v="",extra=""){return '<div class="field"><label>'+l+'</label><input id="m_'+n+'" type="'+t+'" value="'+esc(v)+'" '+extra+'></div>'}
+function select(n,l,opts,v){return '<div class="field"><label>'+l+'</label><select id="m_'+n+'">'+opts.map(x=>'<option value="'+esc(x)+'" '+(x===v?"selected":"")+'>'+esc(x)+'</option>').join("")+'</select></div>'}
+function catNames(){return DATA.categories||[]}
+function accountNames(){return DATA.accounts.length?DATA.accounts.map(x=>x.name):["Principal"]}
+function totals(){const inc=sum(DATA.transactions.filter(x=>x.type==="income"),x=>x.amount),exp=sum(DATA.transactions.filter(x=>x.type==="expense"),x=>x.amount),acct=sum(DATA.accounts,x=>x.balance),inv=sum(DATA.investments,x=>x.quantity*x.currentPrice),debt=sum(DATA.debts,x=>x.balance);return{inc,exp,acct,inv,debt,net:acct+inv-debt}}
+function draw(id,series,labels){const c=$(id);if(!c)return;const r=c.getBoundingClientRect(),w=Math.max(400,r.width),h=260,dpr=devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;const x=c.getContext("2d");x.scale(dpr,dpr);x.clearRect(0,0,w,h);const vals=series.flatMap(s=>s.values.map(Number));const max=Math.max(1,...vals.map(Math.abs)),pad=28; x.strokeStyle=getComputedStyle(document.body).getPropertyValue("--line");x.fillStyle=getComputedStyle(document.body).getPropertyValue("--muted");x.font="11px Arial";for(let i=0;i<4;i++){const yy=pad+i*(h-pad*1.5)/3;x.beginPath();x.moveTo(pad,yy);x.lineTo(w-10,yy);x.stroke()}series.forEach((s,si)=>{x.strokeStyle=s.color||getComputedStyle(document.body).getPropertyValue("--green");x.lineWidth=2;x.beginPath();s.values.forEach((v,i)=>{const xx=pad+(w-pad-18)*(i/Math.max(1,s.values.length-1)),yy=h/2-(Number(v)/max)*(h/2-pad);i?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke();s.values.forEach((v,i)=>{const xx=pad+(w-pad-18)*(i/Math.max(1,s.values.length-1)),yy=h/2-(Number(v)/max)*(h/2-pad);x.fillStyle=s.color||getComputedStyle(document.body).getPropertyValue("--green");x.beginPath();x.arc(xx,yy,3,0,Math.PI*2);x.fill()})});labels.forEach((l,i)=>{x.fillStyle=getComputedStyle(document.body).getPropertyValue("--muted");x.fillText(l,pad+(w-pad-18)*(i/Math.max(1,labels.length-1))-12,h-8)})}
+let DASH_PERIOD="month";
+function periodRange(kind){
+  const now=new Date();now.setHours(0,0,0,0);
+  let start=new Date(now),end=new Date(now);
+  if(kind==="today"){end.setDate(end.getDate()+1)}
+  else if(kind==="7d"){start.setDate(start.getDate()-6);end.setDate(end.getDate()+1)}
+  else if(kind==="week"){const day=(now.getDay()+6)%7;start.setDate(start.getDate()-day);end=new Date(start);end.setDate(end.getDate()+7)}
+  else if(kind==="30d"){start.setDate(start.getDate()-29);end.setDate(end.getDate()+1)}
+  else if(kind==="3m"){start=new Date(now.getFullYear(),now.getMonth()-2,1);end=new Date(now.getFullYear(),now.getMonth()+1,1)}
+  else if(kind==="6m"){start=new Date(now.getFullYear(),now.getMonth()-5,1);end=new Date(now.getFullYear(),now.getMonth()+1,1)}
+  else if(kind==="year"){start=new Date(now.getFullYear(),0,1);end=new Date(now.getFullYear()+1,0,1)}
+  else{start=new Date(now.getFullYear(),now.getMonth(),1);end=new Date(now.getFullYear(),now.getMonth()+1,1)}
+  return{start,end};
+}
+function inRange(d,start,end){const x=new Date(String(d||"")+"T00:00:00");return x>=start&&x<end}
+function periodStats(kind){
+  const r=periodRange(kind),tx=DATA.transactions||[],a=tx.filter(x=>inRange(x.date,r.start,r.end));
+  const income=sum(a.filter(x=>x.type==="income"),x=>x.amount),expense=sum(a.filter(x=>x.type==="expense"),x=>x.amount),balance=sum(DATA.accounts||[],x=>x.balance);
+  const openBills=(DATA.bills||[]).filter(x=>x.status!=="paid"&&x.status!=="received");
+  const payable=sum(openBills.filter(x=>x.type==="payable"),x=>x.amount),receivable=sum(openBills.filter(x=>x.type==="receivable"),x=>x.amount);
+  const reserve=balance>0?balance*(Number(DATA.settings.reserveMonths||0)/12):0;
+  const days=Math.max(1,Math.ceil((r.end-r.start)/86400000));
+  return{r,income,expense,net:income-expense,balance,payable,receivable,reserve,days,average:expense/days,ending:balance+income-expense,projected:balance+receivable-payable,daily:Math.max(0,(balance+receivable-payable-reserve)/days),count:a.length};
+}
+function renderPeriodDashboard(){
+  if(!DATA||!$("periodMetrics"))return;
+  document.querySelectorAll("#periodTabs button").forEach(b=>b.classList.toggle("active",b.dataset.period===DASH_PERIOD));
+  const x=periodStats(DASH_PERIOD),c=DATA.settings.currency;
+  $("periodMetrics").innerHTML=[
+    ["Saldo atual",money(x.balance,c),"Saldo real disponível",""],
+    ["Receitas",money(x.income,c),"Entradas do período","positive"],
+    ["Despesas",money(x.expense,c),x.count+" lançamento(s)","negative"],
+    ["Resultado",money(x.net,c),"Receitas − despesas",x.net>=0?"positive":"negative"],
+    ["Saldo após período",money(x.ending,c),"Saldo atual + resultado",""],
+    ["Saldo projetado",money(x.projected,c),"Inclui contas futuras","blue"],
+    ["Média de gasto",money(x.average,c),"Média diária","negative"],
+    ["A pagar",money(x.payable,c),"Contas futuras cadastradas","gold"]
+  ].map(v=>'<div class="metric-card"><div class="label">'+v[0]+'</div><div class="value '+v[3]+'">'+v[1]+'</div><div class="sub">'+v[2]+'</div></div>').join("");
+  $("spendLimit").textContent=money(x.daily,c)+"/dia";
+  $("spendLimit").className="value "+(x.daily>0?"safe":"critical");
+  $("spendLimitSub").textContent="Depois de contas futuras e reserva de "+money(x.reserve,c)+".";
+  let bal=x.balance,min=bal,minDate=null;
+  (DATA.bills||[]).filter(b=>b.status!=="paid"&&b.status!=="received"&&b.type==="payable").sort((a,b)=>String(a.due).localeCompare(String(b.due))).forEach(b=>{bal-=Number(b.amount)||0;if(bal<min){min=bal;minDate=b.due}});
+  $("minProjected").textContent=money(min,c);$("minProjected").className="value "+(min<0?"critical":"safe");
+  $("criticalDate").textContent=min<0?"Pode ficar negativo em "+minDate:"Sem saldo negativo previsto pelas contas cadastradas.";
+}
+function renderDashboard(){
+  const t=totals(),c=DATA.settings.currency;
+  $("kpis").innerHTML='<div class="kpi"><div class="label">Saldo em contas</div><div class="value">'+money(t.acct,c)+'</div><div class="sub">Saldo real atual</div></div><div class="kpi"><div class="label">Receitas</div><div class="value positive">'+money(t.inc,c)+'</div></div><div class="kpi"><div class="label">Despesas</div><div class="value negative">'+money(t.exp,c)+'</div></div><div class="kpi"><div class="label">Patrimônio líquido</div><div class="value blue">'+money(t.net,c)+'</div></div>';
+  renderPeriodDashboard();
+  const ms=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);ms.push(d.toISOString().slice(0,7))}
+  const vals=ms.map(m=>{const a=DATA.transactions.filter(x=>month(x.date)===m);return sum(a.filter(x=>x.type==="income"),x=>x.amount)-sum(a.filter(x=>x.type==="expense"),x=>x.amount)});
+  draw("cashChart",[{values:vals}],ms);
+  const cats=DATA.categories.map(cn=>sum(DATA.transactions.filter(x=>x.type==="expense"&&x.category===cn),x=>x.amount));draw("catChart",[{values:cats}],DATA.categories.map(x=>x.slice(0,7)));
+  $("cashStatus").textContent=vals.at(-1)>=0?"Fluxo positivo":"Fluxo negativo";
+  const up=DATA.bills.filter(x=>x.status!=="paid"&&x.status!=="received").sort((a,b)=>String(a.due).localeCompare(String(b.due))).slice(0,6);
+  $("upcoming").innerHTML=up.map(x=>'<div class="progress-row"><div class="progress-head"><span>'+esc(x.description)+'</span><b>'+money(x.amount,c)+'</b></div><div class="mini">'+esc(x.due)+' • '+(x.type==="receivable"?"A receber":"A pagar")+' <button class="btn-small" onclick="payBill(\''+x.id+'\')">Baixar</button></div></div>').join("")||'<div class="empty">Nenhum vencimento próximo.</div>';
+  $("goalSummary").innerHTML=DATA.goals.slice(0,5).map(g=>{const p=Math.min(100,Number(g.current||0)/Math.max(1,Number(g.target||0))*100);return '<div class="progress-row"><div class="progress-head"><span>'+esc(g.name)+'</span><b>'+p.toFixed(0)+'%</b></div><div class="bar"><i style="width:'+p+'%"></i></div></div>'}).join("")||'<div class="empty">Crie sua primeira meta.</div>';
+  $("dashNotice").textContent="Painel pronto. Use os botões para lançar, planejar, analisar e salvar seus dados.";
+}
+function renderTx(){const q=($("txSearch")?.value||"").toLowerCase(),f=$("txFilter")?.value||"all";let a=DATA.transactions.filter(x=>(f==="all"||x.type===f)&&(!q||String(x.description+" "+x.category).toLowerCase().includes(q))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$("txTable").innerHTML=a.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.account)+'</td><td class="'+(x.type==="income"?"positive":x.type==="expense"?"negative":"")+'">'+money(x.amount,DATA.settings.currency)+'</td><td>'+esc(x.status||"confirmed")+'</td><td><button class="btn-small" onclick="editTx(\''+x.id+'\')">Editar</button> <button class="btn-small btn-danger" onclick="delItem(\'transactions\',\''+x.id+'\')">Excluir</button></td></tr>').join("")||'<tr><td colspan="8" class="empty">Nenhum lançamento.</td></tr>'}
+function openTx(existing=null){
+  const x=existing||{};
+  const cat=catNames(),acc=accountNames(),projects=(DATA.projects||[]).map(p=>p.name);
+  const categoryField='<div class="field"><label>Categoria</label><div class="row"><select id="m_category" style="flex:1">'+cat.map(v=>'<option value="'+esc(v)+'" '+(v===(x.category||cat[0])?"selected":"")+'>'+esc(v)+'</option>').join("")+'</select><button type="button" class="btn-small" onclick="quickAddCategory()">+ Cadastrar</button></div></div>';
+  const accountField='<div class="field"><label>Conta</label><div class="row"><select id="m_account" style="flex:1">'+acc.map(v=>'<option value="'+esc(v)+'" '+(v===(x.account||acc[0])?"selected":"")+'>'+esc(v)+'</option>').join("")+'</select><button type="button" class="btn-small" onclick="quickAddAccount()">+ Cadastrar</button></div></div>';
+  const projectField='<div class="field"><label>Centro / projeto</label><div class="row"><select id="m_project" style="flex:1"><option value="">Sem projeto</option>'+projects.map(v=>'<option value="'+esc(v)+'" '+(v===(x.project||"")?"selected":"")+'>'+esc(v)+'</option>').join("")+'</select><button type="button" class="btn-small" onclick="quickAddProject()">+ Cadastrar</button></div></div>';
+  modal(existing?"Editar lançamento":"Novo lançamento",'<div class="form">'+input("date","Data","date",x.date||today())+input("description","Descrição","text",x.description||"")+select("type","Tipo",["income","expense","transfer"],x.type||"expense")+input("amount","Valor","number",x.amount||0,"step=0.01")+categoryField+accountField+select("status","Status",["confirmed","planned","pending"],x.status||"confirmed")+projectField+'<div class="field wide"><label>Observações</label><textarea id="m_notes">'+esc(x.notes||"")+'</textarea></div></div><button type="button" class="btn-green" id="m_save">Salvar lançamento</button>',()=>{const v={id:x.id||uid("tx"),date:$("m_date").value,description:$("m_description").value,type:$("m_type").value,amount:Number($("m_amount").value||0),category:$("m_category").value,account:$("m_account").value,status:$("m_status").value,project:$("m_project").value,notes:$("m_notes").value};if(existing){const i=DATA.transactions.findIndex(z=>z.id===x.id);DATA.transactions[i]=v}else DATA.transactions.push(v);$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Lançamento salvo")})});$("m_save").onclick=currentModalSave}
+function editTx(id){const x=DATA.transactions.find(z=>z.id===id);if(x)openTx(x)}
+function quickAddCategory(){
+  const name=prompt("Nome da categoria:","");
+  if(!name||!name.trim())return;
+  const n=name.trim();
+  if(DATA.categories.some(x=>String(x).toLowerCase()===n.toLowerCase())){toast("Categoria já cadastrada");return}
+  DATA.categories.push(n);
+  saveData(true).then(()=>{renderAll();openTx();toast("Categoria cadastrada")});
+}
+function quickAddAccount(){
+  const name=prompt("Nome da conta:","");
+  if(!name||!name.trim())return;
+  const n=name.trim();
+  if(DATA.accounts.some(x=>String(x.name).toLowerCase()===n.toLowerCase())){toast("Conta já cadastrada");return}
+  const type=prompt("Tipo da conta:","Conta corrente")||"Conta corrente";
+  const currency=prompt("Currency:","USD")||DATA.settings.currency||"USD";
+  const balance=Number(prompt("Saldo inicial:","0")||0);
+  DATA.accounts.push({id:uid("acc"),name:n,type,currency,balance});
+  saveData(true).then(()=>{renderAll();openTx();toast("Conta cadastrada")});
+}
+function quickAddProject(){
+  const name=prompt("Nome do projeto / centro de custo:","");
+  if(!name||!name.trim())return;
+  const n=name.trim();
+  if(DATA.projects.some(x=>String(x.name).toLowerCase()===n.toLowerCase())){toast("Projeto/centro já cadastrado");return}
+  const budget=Number(prompt("Orçamento do projeto:","0")||0);
+  const costCenter=prompt("Centro de custo:","Geral")||"Geral";
+  DATA.projects.push({id:uid("proj"),name:n,budget,costCenter});
+  saveData(true).then(()=>{renderAll();openTx();toast("Projeto/centro cadastrado")});
+}
+function renderAccounts(){const c=DATA.settings.currency;$("accountCards").innerHTML=DATA.accounts.map(a=>'<div class="kpi"><div class="label">'+esc(a.name)+'</div><div class="value">'+money(a.balance,a.currency||c)+'</div><div class="sub">'+esc(a.type)+'</div></div>').join("")||'<div class="empty">Cadastre uma conta.</div>';$("accountsTable").innerHTML=DATA.accounts.map(a=>'<tr><td>'+esc(a.name)+'</td><td>'+esc(a.type)+'</td><td>'+esc(a.currency)+'</td><td>'+money(a.balance,a.currency||c)+'</td><td><button class="btn-small" onclick="editAccount(\''+a.id+'\')">Editar</button> <button class="btn-small btn-danger" onclick="delItem(\'accounts\',\''+a.id+'\')">Excluir</button></td></tr>').join("")||'<tr><td colspan="5" class="empty">Nenhuma conta.</td></tr>'}
+function addAccount(existing=null){const x=existing||{};modal(existing?"Editar conta":"Nova conta",'<div class="form">'+input("name","Nome", "text",x.name||"")+select("type","Tipo",["Conta corrente","Poupança","Carteira","Investimento","Outro"],x.type||"Conta corrente")+select("currency","Moeda",["BRL","USD","EUR","GBP"],x.currency||DATA.settings.currency)+input("balance","Saldo","number",x.balance||0,"step=0.01")+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{const v={id:x.id||uid("acc"),name:$("m_name").value,type:$("m_type").value,currency:$("m_currency").value,balance:Number($("m_balance").value||0)};if(existing)DATA.accounts[DATA.accounts.findIndex(z=>z.id===x.id)]=v;else DATA.accounts.push(v);$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Conta salva")})});$("m_save").onclick=currentModalSave}
+function editAccount(id){const x=DATA.accounts.find(z=>z.id===id);if(x)addAccount(x)}
+function renderCards(){const c=DATA.settings.currency;$("creditCards").innerHTML=DATA.cards.map(a=>'<div class="kpi"><div class="label">'+esc(a.name)+'</div><div class="value">'+money(a.balance,c)+'</div><div class="sub">Limite '+money(a.limit,c)+' • '+(a.limit?((a.balance/a.limit)*100).toFixed(0):0)+'% utilizado</div></div>').join("")||'<div class="empty">Cadastre um cartão.</div>';$("cardsTable").innerHTML=DATA.cards.map(a=>'<tr><td>'+esc(a.name)+'</td><td>'+money(a.limit,c)+'</td><td>'+money(a.balance,c)+'</td><td>'+esc(a.closing)+'</td><td>'+esc(a.due)+'</td><td><button class="btn-small" onclick="editCard(\''+a.id+'\')">Editar</button> <button class="btn-small btn-danger" onclick="delItem(\'cards\',\''+a.id+'\')">Excluir</button></td></tr>').join("")||'<tr><td colspan="6" class="empty">Nenhum cartão.</td></tr>'}
+function addCard(existing=null){const x=existing||{};modal(existing?"Editar cartão":"Novo cartão",'<div class="form">'+input("name","Cartão","text",x.name||"")+input("limit","Limite","number",x.limit||0,"step=0.01")+input("balance","Fatura atual","number",x.balance||0,"step=0.01")+input("closing","Dia de fechamento","number",x.closing||1)+input("due","Dia de vencimento","number",x.due||10)+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{const v={id:x.id||uid("card"),name:$("m_name").value,limit:Number($("m_limit").value||0),balance:Number($("m_balance").value||0),closing:$("m_closing").value,due:$("m_due").value};if(existing)DATA.cards[DATA.cards.findIndex(z=>z.id===x.id)]=v;else DATA.cards.push(v);$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Cartão salvo")})});$("m_save").onclick=currentModalSave}
+function editCard(id){const x=DATA.cards.find(z=>z.id===id);if(x)addCard(x)}
+function renderBudget(){const m=$("budgetMonth").value||month(today()),c=DATA.settings.currency;$("budgetList").innerHTML=DATA.budgets.filter(x=>x.month===m).map(b=>{const spent=sum(DATA.transactions.filter(t=>t.type==="expense"&&t.category===b.category&&month(t.date)===m),t=>t.amount),p=Math.min(100,spent/Math.max(1,b.limit)*100);return '<div class="progress-row"><div class="progress-head"><b>'+esc(b.category)+'</b><span>'+money(spent,c)+' / '+money(b.limit,c)+' <button class="btn-small btn-danger" onclick="delItem(\'budgets\',\''+b.id+'\')">Excluir</button></span></div><div class="bar"><i style="width:'+p+'%"></i></div><div class="mini">'+p.toFixed(0)+'% utilizado</div></div>'}).join("")||'<div class="empty">Nenhum limite neste mês.</div>'}
+function addBudget(){modal("Novo limite",'<div class="form">'+input("month","Mês","month",$("budgetMonth").value||month(today()))+select("category","Categoria",catNames(),catNames()[0])+input("limit","Limite","number",0,"step=0.01")+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{DATA.budgets.push({id:uid("bud"),month:$("m_month").value,category:$("m_category").value,limit:Number($("m_limit").value||0)});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Limite salvo")})});$("m_save").onclick=currentModalSave}
+function renderBills(){const c=DATA.settings.currency;$("billsTable").innerHTML=DATA.bills.sort((a,b)=>String(a.due).localeCompare(String(b.due))).map(x=>'<tr><td>'+esc(x.due)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.type==="receivable"?"A receber":"A pagar")+'</td><td>'+money(x.amount,c)+'</td><td>'+esc(x.status)+'</td><td>'+esc(x.recurring||"—")+'</td><td><button class="btn-small" onclick="payBill(\''+x.id+'\')">Baixar</button> <button class="btn-small btn-danger" onclick="delItem(\'bills\',\''+x.id+'\')">Excluir</button></td></tr>').join("")||'<tr><td colspan="7" class="empty">Nenhuma conta.</td></tr>'}
+function addBill(){modal("Nova conta a pagar/receber",'<div class="form">'+input("due","Vencimento","date",today())+input("description","Descrição")+select("type","Tipo",["payable","receivable"],"payable")+input("amount","Valor","number",0,"step=0.01")+select("status","Status",["planned","open","paid","received"],"open")+input("recurring","Recorrência","text","mensal")+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{DATA.bills.push({id:uid("bill"),due:$("m_due").value,description:$("m_description").value,type:$("m_type").value,amount:Number($("m_amount").value||0),status:$("m_status").value,recurring:$("m_recurring").value});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Conta salva")})});$("m_save").onclick=currentModalSave}
+function payBill(id){const x=DATA.bills.find(z=>z.id===id);if(!x)return;x.status=x.type==="receivable"?"received":"paid";saveData(true).then(()=>{renderAll();toast("Conta baixada")})}
+function renderGoals(){const c=DATA.settings.currency;$("goalsList").innerHTML=DATA.goals.map(g=>{const p=Math.min(100,Number(g.current||0)/Math.max(1,Number(g.target||0))*100);return '<div class="panel" style="margin:0 0 10px"><div class="progress-head"><b>'+esc(g.name)+'</b><span>'+money(g.current,c)+' / '+money(g.target,c)+'</span></div><div class="bar"><i style="width:'+p+'%"></i></div><div class="mini">'+p.toFixed(1)+'% • prazo '+esc(g.deadline||"não definido")+'</div><div class="row" style="margin-top:8px"><button class="btn-small" onclick="goalAdd(\''+g.id+'\')">Adicionar valor</button><button class="btn-small btn-danger" onclick="delItem(\'goals\',\''+g.id+'\')">Excluir</button></div></div>'}).join("")||'<div class="empty">Nenhuma meta cadastrada.</div>'}
+function addGoal(){modal("Nova meta",'<div class="form">'+input("name","Meta")+input("target","Valor alvo","number",0,"step=0.01")+input("current","Valor atual","number",0,"step=0.01")+input("deadline","Prazo","date")+'</div><button class="btn-green" id="m_save">Criar meta</button>',()=>{DATA.goals.push({id:uid("goal"),name:$("m_name").value,target:Number($("m_target").value||0),current:Number($("m_current").value||0),deadline:$("m_deadline").value});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Meta criada")})});$("m_save").onclick=currentModalSave}
+function goalAdd(id){const g=DATA.goals.find(x=>x.id===id),v=prompt("Quanto adicionar à meta?","100");if(!g||v===null)return;g.current=Number(g.current||0)+Number(v||0);saveData(true).then(()=>{renderAll();toast("Meta atualizada")})}
+function renderDebts(){const c=DATA.settings.currency,t=sum(DATA.debts,x=>x.balance);$("debtKpis").innerHTML='<div class="kpi"><div class="label">Dívida total</div><div class="value negative">'+money(t,c)+'</div></div><div class="kpi"><div class="label">Parcelas mínimas</div><div class="value">'+money(sum(DATA.debts,x=>x.minPayment),c)+'</div></div>';$("debtsTable").innerHTML=DATA.debts.map(x=>'<tr><td>'+esc(x.description)+'</td><td>'+money(x.balance,c)+'</td><td>'+Number(x.rate||0).toFixed(2)+'%</td><td>'+money(x.minPayment,c)+'</td><td>'+esc(x.due)+'</td><td><button class="btn-small btn-danger" onclick="delItem(\'debts\',\''+x.id+'\')">Excluir</button></td></tr>').join("")||'<tr><td colspan="6" class="empty">Nenhuma dívida.</td></tr>'}
+function addDebt(){modal("Nova dívida",'<div class="form">'+input("description","Descrição")+input("balance","Saldo devedor","number",0,"step=0.01")+input("rate","Juros ao mês (%)","number",0,"step=0.01")+input("minPayment","Parcela mínima","number",0,"step=0.01")+input("due","Vencimento","text","mensal")+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{DATA.debts.push({id:uid("debt"),description:$("m_description").value,balance:Number($("m_balance").value||0),rate:Number($("m_rate").value||0),minPayment:Number($("m_minPayment").value||0),due:$("m_due").value});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Dívida salva")})});$("m_save").onclick=currentModalSave}
+function renderInvest(){const c=DATA.settings.currency,cost=sum(DATA.investments,x=>x.quantity*x.avgPrice),val=sum(DATA.investments,x=>x.quantity*x.currentPrice),gain=val-cost;$("investKpis").innerHTML='<div class="kpi"><div class="label">Valor investido</div><div class="value">'+money(cost,c)+'</div></div><div class="kpi"><div class="label">Valor atual</div><div class="value blue">'+money(val,c)+'</div></div><div class="kpi"><div class="label">Resultado</div><div class="value '+(gain>=0?"positive":"negative")+'">'+money(gain,c)+'</div></div><div class="kpi"><div class="label">Rentabilidade</div><div class="value">'+(cost?(gain/cost*100).toFixed(2):"0")+'%</div></div>';$("investTable").innerHTML=DATA.investments.map(x=>{const co=x.quantity*x.avgPrice,va=x.quantity*x.currentPrice;return '<tr><td>'+esc(x.asset)+'</td><td>'+esc(x.ticker)+'</td><td>'+esc(x.type)+'</td><td>'+x.quantity+'</td><td>'+money(x.avgPrice,x.currency||c)+'</td><td>'+money(x.currentPrice,x.currency||c)+'</td><td>'+money(va,x.currency||c)+'</td><td class="'+(va>=co?"positive":"negative")+'">'+(co?(va/co-1)*100:0).toFixed(2)+'%</td><td><button class="btn-small btn-danger" onclick="delItem(\'investments\',\''+x.id+'\')">Excluir</button></td></tr>'}).join("")||'<tr><td colspan="9" class="empty">Nenhum investimento.</td></tr>'}
+function addInvestment(){modal("Novo investimento",'<div class="form">'+input("asset","Ativo")+input("ticker","Ticker")+select("type","Tipo",["Ação","FII","ETF","Fundo","Renda Fixa","Tesouro","Cripto","Moeda","Imóvel","Stock","REIT","Outro"],"Ação")+input("quantity","Quantidade","number",0,"step=0.000001")+input("avgPrice","Preço médio","number",0,"step=0.000001")+input("currentPrice","Preço atual","number",0,"step=0.000001")+select("currency","Moeda",["BRL","USD","EUR","GBP"],DATA.settings.currency)+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{DATA.investments.push({id:uid("inv"),asset:$("m_asset").value,ticker:$("m_ticker").value,type:$("m_type").value,quantity:Number($("m_quantity").value||0),avgPrice:Number($("m_avgPrice").value||0),currentPrice:Number($("m_currentPrice").value||0),currency:$("m_currency").value});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Investimento salvo")})});$("m_save").onclick=currentModalSave}
+function renderNet(){const t=totals(),c=DATA.settings.currency;$("netKpis").innerHTML='<div class="kpi"><div class="label">Ativos financeiros</div><div class="value positive">'+money(t.acct+t.inv,c)+'</div></div><div class="kpi"><div class="label">Passivos</div><div class="value negative">'+money(t.debt,c)+'</div></div><div class="kpi"><div class="label">Patrimônio líquido</div><div class="value blue">'+money(t.net,c)+'</div></div>'; $("assetList").innerHTML='<div class="progress-row"><div class="progress-head"><span>Contas</span><b>'+money(t.acct,c)+'</b></div></div><div class="progress-row"><div class="progress-head"><span>Investimentos</span><b>'+money(t.inv,c)+'</b></div></div>'; $("liabilityList").innerHTML=DATA.debts.map(x=>'<div class="progress-row"><div class="progress-head"><span>'+esc(x.description)+'</span><b>'+money(x.balance,c)+'</b></div></div>').join("")||'<div class="empty">Nenhum passivo.</div>';draw("netChart",[{values:[0,0,0,0,0,t.net]}],["","","","","","Hoje"])}
+function renderReports(){const m=$("reportMonth").value||month(today()),c=DATA.settings.currency,tx=DATA.transactions.filter(x=>month(x.date)===m),inc=sum(tx.filter(x=>x.type==="income"),x=>x.amount),exp=sum(tx.filter(x=>x.type==="expense"),x=>x.amount),res=inc-exp;$("reportKpis").innerHTML='<div class="kpi"><div class="label">Receitas</div><div class="value positive">'+money(inc,c)+'</div></div><div class="kpi"><div class="label">Despesas</div><div class="value negative">'+money(exp,c)+'</div></div><div class="kpi"><div class="label">Resultado</div><div class="value '+(res>=0?"positive":"negative")+'">'+money(res,c)+'</div></div><div class="kpi"><div class="label">Taxa de poupança</div><div class="value">'+(inc?(res/inc*100).toFixed(1):"0")+'%</div></div>';draw("reportCashChart",[{values:[inc],color:"#32d583"},{values:[-exp],color:"#ff6672"}],[m]);const cats=DATA.categories.map(cn=>({c:cn,v:sum(tx.filter(x=>x.type==="expense"&&x.category===cn),x=>x.amount)})).filter(x=>x.v).sort((a,b)=>b.v-a.v);$("reportCats").innerHTML=cats.map(x=>'<div class="progress-row"><div class="progress-head"><span>'+esc(x.c)+'</span><b>'+money(x.v,c)+'</b></div><div class="bar"><i style="width:'+Math.min(100,x.v/Math.max(1,cats[0].v)*100)+'%"></i></div></div>').join("")||'<div class="empty">Sem despesas no período.</div>';const ms=[];for(let i=11;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);ms.push(d.toISOString().slice(0,7))}$("monthlyTable").innerHTML=ms.map(x=>{const z=DATA.transactions.filter(t=>month(t.date)===x),a=sum(z.filter(t=>t.type==="income"),t=>t.amount),b=sum(z.filter(t=>t.type==="expense"),t=>t.amount);return '<tr><td>'+x+'</td><td class="positive">'+money(a,c)+'</td><td class="negative">'+money(b,c)+'</td><td>'+money(a-b,c)+'</td><td>'+(a?((a-b)/a*100).toFixed(1):"0")+'%</td></tr>'}).join("")}
+function reportCSV(){const m=$("reportMonth").value||month(today()),tx=DATA.transactions.filter(x=>month(x.date)===m),rows=[["Data","Descrição","Tipo","Categoria","Conta","Valor","Status"],...tx.map(x=>[x.date,x.description,x.type,x.category,x.account,x.amount,x.status])];download("globaltools-relatorio-"+m+".csv",rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\n"),"text/csv")}
+function printReport(){const old=document.title;document.title="GlobalTools Finance — Financial Report";window.print();setTimeout(()=>document.title=old,1000)}
+function renderProjects(){$("projectsList").innerHTML=DATA.projects.map(p=>{const spent=sum(DATA.transactions.filter(t=>t.project===p.name&&t.type==="expense"),t=>t.amount),pct=Math.min(100,spent/Math.max(1,p.budget)*100);return '<div class="panel" style="margin:0 0 10px"><div class="progress-head"><b>'+esc(p.name)+'</b><span>'+money(spent,DATA.settings.currency)+' / '+money(p.budget,DATA.settings.currency)+'</span></div><div class="bar"><i style="width:'+pct+'%"></i></div><div class="mini">'+pct.toFixed(0)+'% usado • Centro: '+esc(p.costCenter||"Geral")+'</div><button class="btn-small btn-danger" onclick="delItem(\'projects\',\''+p.id+'\')">Excluir</button></div>'}).join("")||'<div class="empty">Nenhum projeto.</div>'}
+function addProject(){modal("Novo projeto / centro de custo",'<div class="form">'+input("name","Projeto")+input("budget","Orçamento","number",0,"step=0.01")+input("costCenter","Centro de custo")+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{DATA.projects.push({id:uid("proj"),name:$("m_name").value,budget:Number($("m_budget").value||0),costCenter:$("m_costCenter").value});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Projeto criado")})});$("m_save").onclick=currentModalSave}
+function renderContacts(){$("contactsTable").innerHTML=DATA.contacts.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.email)+'</td><td>'+esc(x.phone)+'</td><td><button class="btn-small btn-danger" onclick="delItem(\'contacts\',\''+x.id+'\')">Excluir</button></td></tr>').join("")||'<tr><td colspan="5" class="empty">Nenhum contato.</td></tr>'}
+function addContact(){modal("Novo contato",'<div class="form">'+input("name","Nome")+select("type","Tipo",["Cliente","Fornecedor","Favorecido","Pagador","Outro"],"Cliente")+input("email","E-mail","email")+input("phone","Telefone")+'</div><button class="btn-green" id="m_save">Salvar</button>',()=>{DATA.contacts.push({id:uid("contact"),name:$("m_name").value,type:$("m_type").value,email:$("m_email").value,phone:$("m_phone").value});$("modal").classList.remove("show");saveData(true).then(()=>{renderAll();toast("Contato salvo")})});$("m_save").onclick=currentModalSave}
+function renderDocs(){$("docsTable").innerHTML=DATA.documents.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.reference)+'</td><td>'+esc(x.notes)+'</td></tr>').join("")||'<tr><td colspan="4" class="empty">Nenhum documento vinculado.</td></tr>'}
+function renderInsights(){const t=totals(),rate=t.inc?((t.inc-t.exp)/t.inc*100):0,debtRatio=t.acct?t.debt/t.acct*100:0,big=DATA.categories.map(c=>({c,v:sum(DATA.transactions.filter(x=>x.type==="expense"&&x.category===c),x=>x.amount)})).sort((a,b)=>b.v-a.v)[0];let health=0;health+=rate>=20?30:rate>=10?22:rate>=0?12:0;health+=debtRatio<20?25:debtRatio<50?15:5;health+=DATA.goals.length?15:0;health+=DATA.accounts.length?15:5;health+=DATA.budgets.length?15:5;health=Math.min(100,health);$("insights").innerHTML='<div class="cards"><div class="kpi"><div class="label">Índice de saúde</div><div class="value '+(health>=70?"positive":health>=45?"gold":"negative")+'">'+health+'/100</div></div><div class="kpi"><div class="label">Taxa de poupança</div><div class="value">'+rate.toFixed(1)+'%</div></div><div class="kpi"><div class="label">Maior categoria</div><div class="value">'+(big?esc(big.c):"—")+'</div></div><div class="kpi"><div class="label">Dívida / contas</div><div class="value">'+debtRatio.toFixed(1)+'%</div></div></div>';$("health").innerHTML='<div class="progress-row"><div class="progress-head"><span>Saúde financeira</span><b>'+health+'/100</b></div><div class="bar"><i style="width:'+health+'%"></i></div></div><p class="small-note">Indicador educativo baseado nos dados lançados no painel.</p>';$("actions").innerHTML='<ul>'+ (rate<10?'<li>Revisar despesas variáveis para aumentar a margem.</li>':"")+(DATA.budgets.length===0?'<li>Criar orçamento por categoria.</li>':"")+(DATA.goals.length===0?'<li>Criar uma meta financeira.</li>':"")+(t.debt>0?'<li>Acompanhar e priorizar dívidas de maior custo.</li>':"")+'<li>Revisar contas e lançamentos recorrentes.</li></ul>'}
+function planRank(p){return p==="unlimited"?3:p==="business"?2:1}
+function choosePlan(plan){const current=ME?.plan||"starter";if(plan===current)return toast("Este já é o seu plano atual.");if(planRank(plan)<planRank(current))return openBillingPortal();startUpgrade(plan)}
+async function startUpgrade(plan){const x=await api("/api/upgrade",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan})});if(x.j.url)return location.href=x.j.url;toast(x.j.error||"Não foi possível iniciar o pagamento.")}
+async function openBillingPortal(){const x=await api("/api/billing-portal",{method:"POST"});if(x.j.url)return location.href=x.j.url;toast(x.j.error||"Portal de assinatura indisponível.")}
+function renderSubscription(){
+  const current=ME?.plan||"starter";
+  const plans=[{id:"starter",name:"Starter",price:"US$ 14,90",desc:"Essencial para organizar sua vida financeira.",items:["Dashboard financeiro","Transações e contas","Orçamento e metas"]},{id:"business",name:"Business",price:"US$ 29,90 / mês",desc:"Mais recursos para gestão financeira.",items:["Tudo do Starter","Relatórios e previsões","Gestão avançada"]},{id:"unlimited",name:"Unlimited",price:"US$ 49,90 / mês",desc:"Experiência completa do GlobalTools Finance.",items:["Tudo do Business","Recursos avançados","Multiempresa"]}];
+  const grid=$("planGrid");if(!grid)return;
+  grid.innerHTML=plans.map(p=>{const isCurrent=p.id===current,higher=planRank(p.id)>planRank(current),label=isCurrent?"Plano atual":higher?"Alterar para "+p.name:"Gerenciar assinatura",action=isCurrent?"toast('Este já é o seu plano atual.')":higher?"choosePlan('"+p.id+"')":"openBillingPortal()";return '<div class="plan-card '+(isCurrent?"current":"")+'">'+(isCurrent?'<span class="plan-badge">ATUAL</span>':"")+'<h3>'+p.name+'</h3><div class="plan-price">'+p.price+'</div><div class="small-note">'+p.desc+'</div><ul>'+p.items.map(i=>"<li>"+i+"</li>").join("")+'</ul><button class="'+(isCurrent?"":"btn-green")+'" onclick="'+action+'">'+label+'</button></div>'}).join("");
+  if($("subscriptionCurrent"))$("subscriptionCurrent").textContent=ME?.planLabel||current;
+  if($("sidePlan"))$("sidePlan").textContent=ME?.planLabel||current;
+}
+function renderAccountDetails(){
+  const u=ME||{};
+  if($("accountEmail"))$("accountEmail").textContent=u.email||"—";
+  if($("accountPlan"))$("accountPlan").textContent=u.planLabel||u.plan||"—";
+  if($("accountProducts"))$("accountProducts").textContent=(u.products&&u.products.length)?u.products.join(", "):"—";
+  if($("accountSubscription"))$("accountSubscription").textContent=u.subscriptionActive?"Ativa":"Sem assinatura";
+  if($("accountStatus"))$("accountStatus").textContent="Ativa";
+}
+function renderSettings(){const s=DATA.settings||{};$("setCurrency").value=s.currency||"USD";$("setLang").value=s.language||"English";if($("langTop"))$("langTop").value=s.language||"English";$("setClose").value=s.closeDay||10;$("setReserve").value=s.reserveMonths||6;$("setBudgetName").value=s.budgetName||"My budget"}
+function makeDict(d){return Object.assign({},I18N.English||{},d||{})}
+const I18N={
+English:{
+"Visão geral":"Overview","Dashboard":"Dashboard","Transações":"Transactions","Contas":"Accounts","Cartões":"Credit Cards","Planejamento":"Planning","Orçamento":"Budget","Contas a pagar/receber":"Accounts payable/receivable","Metas":"Goals","Dívidas":"Debts","Patrimônio":"Net worth","Investimentos":"Investments","Patrimônio líquido":"Net worth","Gestão":"Management","Relatórios":"Reports","Projetos / Centros de custo":"Projects / Cost centers","Clientes / Fornecedores":"Customers / Suppliers","Documentos":"Documents","Ferramentas":"Tools","Importar / Exportar":"Import / Export","Insights":"Insights","Configurações":"Settings","Dados da conta":"Account details","Informações do seu acesso ao GlobalTools Finance.":"Information about your GlobalTools Finance access.","Ativa":"Active","E-mail":"Email","Plano":"Plan","Produtos liberados":"Unlocked products","Status da assinatura":"Subscription status","Segurança":"Security","Senha atual":"Current password","Nova senha":"New password","Confirmar nova senha":"Confirm new password","Digite sua senha atual":"Enter your current password","Mínimo de 8 caracteres":"Minimum 8 characters","Repita a nova senha":"Repeat your new password","Alterar senha":"Change password","Visão financeira por período":"Financial view by period","Saldo real + entradas − saídas + compromissos futuros.":"Real balance + inflows − outflows + future commitments.","Hoje":"Today","Semana":"Week","Mês":"Month","Saldo atual":"Current balance","Saldo real disponível":"Available real balance","Entradas do período":"Period income","Resultado":"Result","Receitas − despesas":"Income − expenses","Saldo após período":"Balance after period","Saldo atual + resultado":"Current balance + result","Saldo projetado":"Projected balance","Inclui contas futuras":"Includes future bills","Média de gasto":"Average spending","Média diária":"Daily average","A pagar":"Payables","Contas futuras cadastradas":"Registered future bills","Quanto posso gastar":"How much can I spend","Considerando contas futuras e reserva.":"Considering future bills and reserve.","Depois de contas futuras e reserva de":"After future bills and reserve of","Saldo mínimo projetado":"Projected minimum balance","Sem projeção.":"No projection.","Sem saldo negativo previsto pelas contas cadastradas.":"No negative balance expected from registered bills.","Pode ficar negativo em":"May become negative on","Saldo em contas":"Account balance","Saldo real atual":"Current real balance","Fluxo positivo":"Positive cash flow","Fluxo negativo":"Negative cash flow","A receber":"Receivable","A pagar":"Payable","Baixar":"Mark as paid","Nenhum vencimento próximo.":"No upcoming due dates.","Metas em andamento":"Goals in progress","Crie sua primeira meta.":"Create your first goal.","Ações rápidas":"Quick actions","Salvar configurações":"Save settings","Produtos liberados":"Unlocked products","Voltar ao tema escuro":"Switch to dark theme","Dashboard financeiro":"Financial dashboard","Validando seu acesso...":"Validating your access...","☀ Tema claro":"☀ Light theme","☾ Tema escuro":"☾ Dark theme","Salvar":"Save","+ Lançamento":"+ Transaction","Upgrade":"Upgrade","Plano":"Plan","Plano e assinatura":"Plan & subscription","Plano atual":"Current plan","Alterar plano":"Change plan","Gerenciar assinatura / pagamento":"Manage subscription / payment","Pagamento e assinatura":"Payment & subscription","Escolha o nível do GlobalTools Finance. O pagamento é realizado com segurança pelo Stripe.":"Choose your GlobalTools Finance level. Payment is securely processed by Stripe.","Para uma assinatura já ativa, use o portal para alterar plano ou forma de pagamento.":"For an active subscription, use the portal to change your plan or payment method.","PLANO ATUAL":"CURRENT PLAN","Sair":"Sign out","Carregando seus dados financeiros...":"Loading your financial data...","Fluxo de caixa — últimos 6 meses":"Cash flow — last 6 months","Despesas por categoria":"Expenses by category","Ver relatório":"View report","Próximos vencimentos":"Upcoming due dates","Ver contas":"View bills","Metas em andamento":"Goals in progress","Ver metas":"View goals","Ações rápidas":"Quick actions","+ Receita/Despesa":"+ Income/Expense","+ Conta":"+ Account","+ Cartão":"+ Card","+ Conta a pagar/receber":"+ Bill/receivable","+ Meta":"+ Goal","Relatórios financeiros":"Financial reports","Atualizar":"Refresh","Exportar CSV":"Export CSV","Imprimir/PDF":"Print/PDF","Receitas x despesas":"Income vs expenses","Top categorias":"Top categories","DRE / resumo do período":"Income statement / period summary","Receitas":"Income","Despesas":"Expenses","Resultado":"Result","Taxa de poupança":"Savings rate","Poupança":"Savings","Lançamentos":"Transactions","Buscar descrição/categoria":"Search description/category","Todos":"All","Transferências":"Transfers","+ Novo":"+ New","Ações":"Actions","Contas e saldos":"Accounts & balances","+ Nova conta":"+ New account","Conta":"Account","Tipo":"Type","Moeda":"Currency","Saldo inicial":"Opening balance","Editar":"Edit","Excluir":"Delete","Cartões de crédito":"Credit cards","+ Novo cartão":"+ New card","Cartão":"Card","Limite":"Limit","Fatura":"Statement","Fechamento":"Closing date","Vencimento":"Due date","Orçamento mensal":"Monthly budget","+ Limite":"+ Budget limit","Contas a pagar e receber":"Accounts payable and receivable","+ Nova conta":"+ New bill","Status":"Status","Recorrência":"Recurring","Controle de dívidas":"Debt management","+ Nova dívida":"+ New debt","Saldo":"Balance","Juros":"Interest","Parcela":"Payment","Carteira preparada para ações, FIIs, ETFs, fundos, renda fixa, Tesouro, cripto, moedas, imóveis e ativos internacionais. Os preços atuais são informados pelo usuário até conectarmos uma fonte de cotações.":"Portfolio ready for stocks, REITs, ETFs, funds, fixed income, government bonds, crypto, currencies, real estate and international assets. Current prices are entered manually until a market quote source is connected.","Carteira de investimentos":"Investment portfolio","+ Ativo":"+ Asset","Ativo":"Asset","Ticker":"Ticker","Qtd.":"Qty.","Preço médio":"Average price","Preço atual":"Current price","Valor":"Value","Rentabilidade":"Return","Ativos financeiros":"Financial assets","Passivos":"Liabilities","Patrimônio líquido":"Net worth","Ativos":"Assets","Passivos":"Liabilities","Projetos e centros de custo":"Projects and cost centers","+ Projeto":"+ Project","Clientes, fornecedores e favorecidos":"Customers, suppliers and payees","+ Contato":"+ Contact","Documentos e comprovantes":"Documents and receipts","Importar CSV / OFX":"Import CSV / OFX","Importar":"Import","Limpar":"Clear","Exportar / backup":"Export / backup","Exportar JSON":"Export JSON","Exportar transações CSV":"Export transactions CSV","Insights financeiros":"Financial insights","Saúde financeira":"Financial health","Próximas ações":"Next actions","Configurações":"Settings","Moeda principal":"Primary currency","Idioma":"Language","Dia de fechamento":"Closing day","Reserva de emergência (meses)":"Emergency fund (months)","Nome do orçamento":"Budget name","Salvar configurações":"Save settings","Voltar ao tema escuro":"Switch to dark theme","Produtos liberados":"Unlocked products","Baixar Excel":"Download Excel","Novo registro":"New record","Fechar":"Close","Salvar lançamento":"Save transaction","Nova conta":"New account","Novo cartão":"New card","Nova conta a pagar/receber":"New payable/receivable","Nova meta":"New goal","Nova dívida":"New debt","Novo investimento":"New investment","Novo projeto / centro de custo":"New project / cost center","Novo contato":"New contact","Salvar":"Save","Criar meta":"Create goal","Adicionar valor":"Add value","Excluir este registro?":"Delete this record?","Nenhum lançamento.":"No transactions.","Nenhuma conta.":"No accounts.","Nenhum cartão.":"No cards.","Nenhum vencimento próximo.":"No upcoming due dates.","Nenhuma meta cadastrada.":"No goals yet.","Nenhuma dívida.":"No debts.","Nenhum investimento.":"No investments.","Nenhum projeto.":"No projects.","Nenhum contato.":"No contacts.","Nenhum documento vinculado.":"No linked documents.","Nenhum produto liberado.":"No products unlocked.","Sem despesas no período.":"No expenses in this period.","Painel pronto. Use os botões para lançar, planejar, analisar e salvar seus dados.":"Dashboard ready. Use the buttons to record, plan, analyze and save your data.","Tema claro":"Light theme","Tema escuro":"Dark theme","Indicador educativo baseado nos dados lançados no painel.":"Educational indicator based on the data entered in the dashboard.","Baixar":"Mark as paid","Hoje":"Today","Revisar contas e lançamentos recorrentes.":"Review recurring bills and transactions."
+},
+"Português":{
+"Overview":"Visão geral","Dashboard":"Dashboard","Transactions":"Transações","Accounts":"Contas","Credit Cards":"Cartões","Planning":"Planejamento","Budget":"Orçamento","Accounts payable/receivable":"Contas a pagar/receber","Goals":"Metas","Debts":"Dívidas","Net worth":"Patrimônio líquido","Management":"Gestão","Reports":"Relatórios","Projects / Cost centers":"Projetos / Centros de custo","Customers / Suppliers":"Clientes / Fornecedores","Documents":"Documentos","Tools":"Ferramentas","Import / Export":"Importar / Exportar","Insights":"Insights","Settings":"Configurações","Financial dashboard":"Dashboard financeiro","Validating your access...":"Validando seu acesso...","☀ Light theme":"☀ Tema claro","☾ Dark theme":"☾ Tema escuro","Save":"Salvar","+ Transaction":"+ Lançamento","Sign out":"Sair","Loading your financial data...":"Carregando seus dados financeiros...","Cash flow — last 6 months":"Fluxo de caixa — últimos 6 meses","Expenses by category":"Despesas por categoria","View report":"Ver relatório","Upcoming due dates":"Próximos vencimentos","View bills":"Ver contas","Goals in progress":"Metas em andamento","View goals":"Ver metas","Quick actions":"Ações rápidas","+ Income/Expense":"+ Receita/Despesa","+ Account":"+ Conta","+ Card":"+ Cartão","+ Bill/receivable":"+ Conta a pagar/receber","+ Goal":"+ Meta","Financial reports":"Relatórios financeiros","Refresh":"Atualizar","Export CSV":"Exportar CSV","Print/PDF":"Imprimir/PDF","Income vs expenses":"Receitas x despesas","Top categories":"Top categorias","Income statement / period summary":"DRE / resumo do período","Income":"Receitas","Expenses":"Despesas","Result":"Resultado","Savings rate":"Taxa de poupança","Savings":"Poupança","Transactions":"Lançamentos","Search description/category":"Buscar descrição/categoria","All":"Todos","Transfers":"Transferências","+ New":"+ Novo","Actions":"Ações","Accounts & balances":"Contas e saldos","+ New account":"+ Nova conta","Account":"Conta","Type":"Tipo","Currency":"Moeda","Opening balance":"Saldo inicial","Edit":"Editar","Delete":"Excluir","Credit cards":"Cartões de crédito","+ New card":"+ Novo cartão","Card":"Cartão","Limit":"Limite","Statement":"Fatura","Closing date":"Fechamento","Due date":"Vencimento","Monthly budget":"Orçamento mensal","+ Budget limit":"+ Limite","Accounts payable and receivable":"Contas a pagar e receber","+ New bill":"+ Nova conta","Status":"Status","Recurring":"Recorrência","Debt management":"Controle de dívidas","+ New debt":"+ Nova dívida","Balance":"Saldo","Interest":"Juros","Payment":"Parcela","Investment portfolio":"Carteira de investimentos","+ Asset":"+ Ativo","Asset":"Ativo","Qty.":"Qtd.","Average price":"Preço médio","Current price":"Preço atual","Value":"Valor","Return":"Rentabilidade","Financial assets":"Ativos financeiros","Liabilities":"Passivos","Assets":"Ativos","Projects and cost centers":"Projetos e centros de custo","+ Project":"+ Projeto","Customers, suppliers and payees":"Clientes, fornecedores e favorecidos","+ Contact":"+ Contato","Documents and receipts":"Documentos e comprovantes","Import CSV / OFX":"Importar CSV / OFX","Import":"Importar","Clear":"Limpar","Export / backup":"Exportar / backup","Export JSON":"Exportar JSON","Export transactions CSV":"Exportar transações CSV","Financial insights":"Insights financeiros","Financial health":"Saúde financeira","Next actions":"Próximas ações","Primary currency":"Moeda principal","Language":"Idioma","Closing day":"Dia de fechamento","Emergency fund (months)":"Reserva de emergência (meses)","Budget name":"Nome do orçamento","Save settings":"Salvar configurações","Switch to dark theme":"Voltar ao tema escuro","Unlocked products":"Produtos liberados","Download Excel":"Baixar Excel","New record":"Novo registro","Close":"Fechar","Save transaction":"Salvar lançamento","New account":"Nova conta","New card":"Novo cartão","New payable/receivable":"Nova conta a pagar/receber","New goal":"Nova meta","New debt":"Nova dívida","New investment":"Novo investimento","New project / cost center":"Novo projeto / centro de custo","New contact":"Novo contato","Create goal":"Criar meta","Add value":"Adicionar valor","Delete this record?":"Excluir este registro?","No transactions.":"Nenhum lançamento.","No accounts.":"Nenhuma conta.","No cards.":"Nenhum cartão.","No upcoming due dates.":"Nenhum vencimento próximo.","No goals yet.":"Nenhuma meta cadastrada.","No debts.":"Nenhuma dívida.","No investments.":"Nenhum investimento.","No projects.":"Nenhum projeto.","No contacts.":"Nenhum contato.","No linked documents.":"Nenhum documento vinculado.","No products unlocked.":"Nenhum produto liberado.","No expenses in this period.":"Sem despesas no período.","Dashboard ready. Use the buttons to record, plan, analyze and save your data.":"Painel pronto. Use os botões para lançar, planejar, analisar e salvar seus dados.","Educational indicator based on the data entered in the dashboard.":"Indicador educativo baseado nos dados lançados no painel.","Mark as paid":"Baixar","Today":"Hoje","Review recurring bills and transactions.":"Revisar contas e lançamentos recorrentes."
+},
+"Español":{},"Français":{}
+};
+I18N["Español"]=makeDict({"Visão geral":"Resumen","Dashboard":"Panel","Transações":"Transacciones","Contas":"Cuentas","Cartões":"Tarjetas de crédito","Planejamento":"Planificación","Orçamento":"Presupuesto","Contas a pagar/receber":"Cuentas por pagar/cobrar","Metas":"Metas","Dívidas":"Deudas","Patrimônio":"Patrimonio","Patrimônio líquido":"Patrimonio neto","Investimentos":"Inversiones","Gestão":"Gestión","Relatórios":"Informes","Projetos / Centros de custo":"Proyectos / Centros de coste","Clientes / Fornecedores":"Clientes / Proveedores","Documentos":"Documentos","Ferramentas":"Herramientas","Importar / Exportar":"Importar / Exportar","Insights":"Insights","Configurações":"Configuración","Dashboard financeiro":"Panel financiero","Validando seu acesso...":"Validando su acceso...","☀ Tema claro":"☀ Tema claro","☾ Tema escuro":"☾ Tema oscuro","Salvar":"Guardar","+ Lançamento":"+ Movimiento","Sair":"Cerrar sesión","Carregando seus dados financeiros...":"Cargando sus datos financieros...","Fluxo de caixa — últimos 6 meses":"Flujo de caja — últimos 6 meses","Despesas por categoria":"Gastos por categoría","Ver relatório":"Ver informe","Próximos vencimentos":"Próximos vencimientos","Ver contas":"Ver cuentas","Metas em andamento":"Metas en progreso","Ver metas":"Ver metas","Ações rápidas":"Acciones rápidas","+ Receita/Despesa":"+ Ingreso/Gasto","+ Conta":"+ Cuenta","+ Cartão":"+ Tarjeta","+ Conta a pagar/receber":"+ Cuenta por pagar/cobrar","+ Meta":"+ Meta","Relatórios financeiros":"Informes financieros","Atualizar":"Actualizar","Exportar CSV":"Exportar CSV","Imprimir/PDF":"Imprimir/PDF","Receitas x despesas":"Ingresos vs gastos","Top categorias":"Principales categorías","DRE / resumo do período":"Estado de resultados / resumen del período","Receitas":"Ingresos","Despesas":"Gastos","Resultado":"Resultado","Taxa de poupança":"Tasa de ahorro","Poupança":"Ahorro","Lançamentos":"Movimientos","Buscar descrição/categoria":"Buscar descripción/categoría","Todos":"Todos","Transferências":"Transferencias","+ Novo":"+ Nuevo","Ações":"Acciones","Contas e saldos":"Cuentas y saldos","+ Nova conta":"+ Nueva cuenta","Conta":"Cuenta","Tipo":"Tipo","Moeda":"Moneda","Saldo inicial":"Saldo inicial","Editar":"Editar","Excluir":"Eliminar","Cartões de crédito":"Tarjetas de crédito","+ Novo cartão":"+ Nueva tarjeta","Cartão":"Tarjeta","Limite":"Límite","Fatura":"Factura","Fechamento":"Cierre","Vencimento":"Vencimiento","Orçamento mensal":"Presupuesto mensual","+ Limite":"+ Límite","Contas a pagar e receber":"Cuentas por pagar y cobrar","Status":"Estado","Recorrência":"Recurrente","Controle de dívidas":"Gestión de deudas","+ Nova dívida":"+ Nueva deuda","Saldo":"Saldo","Juros":"Interés","Parcela":"Cuota","Carteira de investimentos":"Cartera de inversiones","+ Ativo":"+ Activo","Ativo":"Activo","Ticker":"Ticker","Qtd.":"Cant.","Preço médio":"Precio medio","Preço atual":"Precio actual","Valor":"Valor","Rentabilidade":"Rentabilidad","Ativos financeiros":"Activos financieros","Passivos":"Pasivos","Ativos":"Activos","Projetos e centros de custo":"Proyectos y centros de coste","+ Projeto":"+ Proyecto","Clientes, fornecedores e favorecidos":"Clientes, proveedores y beneficiarios","+ Contato":"+ Contacto","Documentos e comprovantes":"Documentos y comprobantes","Importar CSV / OFX":"Importar CSV / OFX","Importar":"Importar","Limpar":"Limpiar","Exportar / backup":"Exportar / copia de seguridad","Exportar JSON":"Exportar JSON","Exportar transações CSV":"Exportar transacciones CSV","Insights financeiros":"Insights financieros","Saúde financeira":"Salud financiera","Próximas ações":"Próximas acciones","Moeda principal":"Moneda principal","Idioma":"Idioma","Dia de fechamento":"Día de cierre","Reserva de emergência (meses)":"Fondo de emergencia (meses)","Nome do orçamento":"Nombre del presupuesto","Salvar configurações":"Guardar configuración","Voltar ao tema escuro":"Cambiar al tema oscuro","Produtos liberados":"Productos desbloqueados","Baixar Excel":"Descargar Excel","Novo registro":"Nuevo registro","Fechar":"Cerrar","Salvar lançamento":"Guardar movimiento","Nova conta":"Nueva cuenta","Novo cartão":"Nueva tarjeta","Nova conta a pagar/receber":"Nueva cuenta por pagar/cobrar","Nova meta":"Nueva meta","Nova dívida":"Nueva deuda","Novo investimento":"Nueva inversión","Novo projeto / centro de custo":"Nuevo proyecto / centro de coste","Novo contato":"Nuevo contacto","Criar meta":"Crear meta","Adicionar valor":"Añadir valor","Excluir este registro?":"¿Eliminar este registro?","Nenhum lançamento.":"No hay movimientos.","Nenhuma conta.":"No hay cuentas.","Nenhum cartão.":"No hay tarjetas.","Nenhum vencimento próximo.":"No hay próximos vencimientos.","Nenhuma meta cadastrada.":"No hay metas.","Nenhuma dívida.":"No hay deudas.","Nenhum investimento.":"No hay inversiones.","Nenhum projeto.":"No hay proyectos.","Nenhum contato.":"No hay contactos.","Nenhum documento vinculado.":"No hay documentos vinculados.","Nenhum produto liberado.":"No hay productos desbloqueados.","Sem despesas no período.":"No hay gastos en este período.","Painel pronto. Use os botões para lançar, planejar, analisar e salvar seus dados.":"Panel listo. Usa los botones para registrar, planificar, analizar y guardar tus datos."});
+I18N["Français"]=makeDict({"Visão geral":"Vue d’ensemble","Dashboard":"Tableau de bord","Transações":"Transactions","Contas":"Comptes","Cartões":"Cartes de crédit","Planejamento":"Planification","Orçamento":"Budget","Contas a pagar/receber":"Comptes fournisseurs/clients","Metas":"Objectifs","Dívidas":"Dettes","Patrimônio":"Patrimoine","Patrimônio líquido":"Patrimoine net","Investimentos":"Investissements","Gestão":"Gestion","Relatórios":"Rapports","Projetos / Centros de custo":"Projets / Centres de coûts","Clientes / Fornecedores":"Clients / Fournisseurs","Documentos":"Documents","Ferramentas":"Outils","Importar / Exportar":"Importer / Exporter","Insights":"Analyses","Configurações":"Paramètres","Dashboard financeiro":"Tableau de bord financier","Validando seu acesso...":"Validation de votre accès...","☀ Tema claro":"☀ Thème clair","☾ Tema escuro":"☾ Thème sombre","Salvar":"Enregistrer","+ Lançamento":"+ Écriture","Sair":"Se déconnecter","Carregando seus dados financeiros...":"Chargement de vos données financières...","Fluxo de caixa — últimos 6 meses":"Flux de trésorerie — 6 derniers mois","Despesas por categoria":"Dépenses par catégorie","Ver relatório":"Voir le rapport","Próximos vencimentos":"Prochaines échéances","Ver contas":"Voir les comptes","Metas em andamento":"Objectifs en cours","Ver metas":"Voir les objectifs","Ações rápidas":"Actions rapides","+ Receita/Despesa":"+ Revenu/Dépense","+ Conta":"+ Compte","+ Cartão":"+ Carte","+ Conta a pagar/receber":"+ Compte à payer/recevoir","+ Meta":"+ Objectif","Relatórios financeiros":"Rapports financiers","Atualizar":"Actualiser","Exportar CSV":"Exporter CSV","Imprimir/PDF":"Imprimer/PDF","Receitas x despesas":"Revenus vs dépenses","Top categorias":"Principales catégories","Receitas":"Revenus","Despesas":"Dépenses","Resultado":"Résultat","Taxa de poupança":"Taux d’épargne","Poupança":"Épargne","Lançamentos":"Écritures","Buscar descrição/categoria":"Rechercher une description/catégorie","Todos":"Tous","Transferências":"Transferts","+ Novo":"+ Nouveau","Ações":"Actions","Contas e saldos":"Comptes et soldes","+ Nova conta":"+ Nouveau compte","Conta":"Compte","Tipo":"Type","Moeda":"Devise","Saldo inicial":"Solde initial","Editar":"Modifier","Excluir":"Supprimer","Cartões de crédito":"Cartes de crédit","+ Novo cartão":"+ Nouvelle carte","Cartão":"Carte","Limite":"Limite","Fatura":"Relevé","Fechamento":"Clôture","Vencimento":"Échéance","Orçamento mensal":"Budget mensuel","+ Limite":"+ Limite","Contas a pagar e receber":"Comptes à payer et à recevoir","Status":"Statut","Recorrência":"Récurrence","Controle de dívidas":"Gestion des dettes","+ Nova dívida":"+ Nouvelle dette","Saldo":"Solde","Juros":"Intérêts","Parcela":"Échéance","Carteira de investimentos":"Portefeuille d’investissements","+ Ativo":"+ Actif","Ativo":"Actif","Ticker":"Ticker","Qtd.":"Qté","Preço médio":"Prix moyen","Preço atual":"Prix actuel","Valor":"Valeur","Rentabilidade":"Rendement","Ativos financeiros":"Actifs financiers","Passivos":"Passifs","Ativos":"Actifs","Projetos e centros de custo":"Projets et centres de coûts","+ Projeto":"+ Projet","Clientes, fornecedores e favorecidos":"Clients, fournisseurs et bénéficiaires","+ Contato":"+ Contact","Documentos e comprovantes":"Documents et justificatifs","Importar CSV / OFX":"Importer CSV / OFX","Importar":"Importer","Limpar":"Effacer","Exportar / backup":"Exporter / sauvegarder","Exportar JSON":"Exporter JSON","Exportar transações CSV":"Exporter les transactions CSV","Insights financeiros":"Analyses financières","Saúde financeira":"Santé financière","Próximas ações":"Prochaines actions","Moeda principal":"Devise principale","Idioma":"Langue","Dia de fechamento":"Jour de clôture","Reserva de emergência (meses)":"Fonds d’urgence (mois)","Nome do orçamento":"Nom du budget","Salvar configurações":"Enregistrer les paramètres","Voltar ao tema escuro":"Passer au thème sombre","Produtos liberados":"Produits disponibles","Baixar Excel":"Télécharger Excel","Novo registro":"Nouvel enregistrement","Fechar":"Fermer","Salvar lançamento":"Enregistrer l’écriture","Nova conta":"Nouveau compte","Novo cartão":"Nouvelle carte","Nova conta a pagar/receber":"Nouveau compte à payer/recevoir","Nova meta":"Nouvel objectif","Nova dívida":"Nouvelle dette","Novo investimento":"Nouvel investissement","Novo projeto / centro de custo":"Nouveau projet / centre de coûts","Novo contato":"Nouveau contact","Criar meta":"Créer l’objectif","Adicionar valor":"Ajouter une valeur","Excluir este registro?":"Supprimer cet enregistrement ?","Nenhum lançamento.":"Aucune écriture.","Nenhuma conta.":"Aucun compte.","Nenhum cartão.":"Aucune carte.","Nenhum vencimento próximo.":"Aucune échéance prochaine.","Nenhuma meta cadastrada.":"Aucun objectif.","Nenhuma dívida.":"Aucune dette.","Nenhum investimento.":"Aucun investissement.","Nenhum projeto.":"Aucun projet.","Nenhum contato.":"Aucun contact.","Nenhum documento vinculado.":"Aucun document lié.","Nenhum produto liberado.":"Aucun produit disponible.","Sem despesas no período.":"Aucune dépense sur la période.","Painel pronto. Use os botões para lançar, planejar, analisar e salvar seus dados.":"Tableau prêt. Utilisez les boutons pour saisir, planifier, analyser et enregistrer vos données."});
+function applyLanguage(lang){
+  const dict=I18N[lang]||I18N.English;
+  document.documentElement.lang=lang==="English"?"en-US":lang==="Português"?"en-US":lang==="Español"?"es":"fr";
+  document.querySelectorAll("#langTop,#setLang").forEach(x=>{if(x) x.value=lang});
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let n;while(n=walker.nextNode()){const raw=n.nodeValue,trim=raw.trim();if(dict[trim])n.nodeValue=raw.replace(trim,dict[trim])}
+  document.querySelectorAll("[placeholder],[title],[aria-label]").forEach(el=>{["placeholder","title","aria-label"].forEach(a=>{const v=el.getAttribute(a);if(v&&dict[v])el.setAttribute(a,dict[v])})});
+  if($("pageTitle")){const active=document.querySelector(".nav button.active");if(active)$("pageTitle").textContent=active.textContent.trim().replace(/^[^A-Za-zÀ-ÿ]+/,"")}
+}
+function setLanguage(lang){if(!DATA)return;DATA.settings.language=lang;localStorage.setItem("gt_language",lang);renderAll();applyLanguage(lang);saveData(true);toast(lang==="English"?"Language changed":lang==="Português"?"Idioma alterado":lang==="Español"?"Idioma cambiado":"Langue modifiée")}
+function renderProducts(){
+  const el=$("products");
+  if(!el)return;
+  const p=ME?.products||[];
+  el.innerHTML=p.map(x=>'<div class="row" style="margin:8px 0"><span class="tag">'+esc(x)+'</span><button class="btn-small" onclick="location.href=\'/api/download-product?product='+encodeURIComponent(x)+'\'">Baixar Excel</button></div>').join("")||'<div class="empty">Nenhum produto liberado.</div>';
+}
+function safeRender(name,fn){
+  try{fn();return true}
+  catch(err){
+    console.error("[GlobalTools render:"+name+"]",err);
+    const n=$("dashNotice");
+    if(n){n.classList.add("error");n.textContent="Erro ao carregar "+name+". Os demais controles continuam disponíveis."}
+    return false;
+  }
+}
+function renderAll(){
+  [
+    ["dashboard",renderDashboard],["transactions",renderTx],["accounts",renderAccounts],["cards",renderCards],
+    ["budget",renderBudget],["bills",renderBills],["goals",renderGoals],["debts",renderDebts],
+    ["investments",renderInvest],["networth",renderNet],["reports",renderReports],["projects",renderProjects],
+    ["contacts",renderContacts],["documents",renderDocs],["insights",renderInsights],["subscription",renderSubscription],["settings",renderSettings],
+    ["products",renderProducts]
+  ].forEach(([name,fn])=>safeRender(name,fn));
+}
+function renderPage(p){
+  const f={dashboard:renderDashboard,transactions:renderTx,accounts:renderAccounts,cards:renderCards,budget:renderBudget,bills:renderBills,goals:renderGoals,debts:renderDebts,investments:renderInvest,networth:renderNet,reports:renderReports,projects:renderProjects,contacts:renderContacts,documents:renderDocs,assistant:renderInsights,subscription:renderSubscription,settings:()=>{renderSettings();renderProducts();renderAccountDetails()}};
+  if(f[p])safeRender(p,f[p]);
+}
+function delItem(key,id){if(!confirm("Excluir este registro?"))return;DATA[key]=DATA[key].filter(x=>x.id!==id);saveData(true).then(()=>{renderAll();toast("Registro excluído")})}
+function parseCSV(text){const lines=text.trim().split(/\r?\n/).filter(Boolean);if(!lines.length)return[];const sep=lines[0].includes(";")?";":",";const h=lines[0].split(sep).map(x=>x.trim().replace(/^"|"$/g,""));return lines.slice(1).map(line=>{const v=line.split(sep).map(x=>x.trim().replace(/^"|"$/g,"")),o={};h.forEach((k,i)=>o[k]=v[i]||"");return{id:uid("tx"),date:o.date||o.data||today(),description:o.description||o.descricao||"Importado",type:(o.type||o.tipo||"expense").toLowerCase(),amount:Number(String(o.amount||o.valor||"0").replace(",","."))||0,category:o.category||o.categoria||"Outros",account:o.account||o.conta||accountNames()[0],status:o.status||"confirmed"}})}
+function parseOFX(text){const out=[];text.split(/<STMTTRN>/i).slice(1).forEach(b=>{const get=t=>{const m=b.match(new RegExp("<"+t+">([^<\\r\\n]+)","i"));return m?m[1].trim():""},dt=get("DTPOSTED").slice(0,8),y=dt.slice(0,4),m=dt.slice(4,6),d=dt.slice(6,8),amt=Number(get("TRNAMT")||0);out.push({id:uid("tx"),date:y&&m&&d?y+"-"+m+"-"+d:today(),description:get("NAME")||get("MEMO")||"OFX",type:amt>=0?"income":"expense",amount:Math.abs(amt),category:"Outros",account:accountNames()[0],status:"confirmed"})});return out}
+function download(name,text,type="application/json"){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function on(id,event,handler){const el=$(id);if(!el)return false;el.addEventListener(event,handler);return true}
+function bind(){
+  nav();
+  on("newTx","click",()=>openTx());
+  on("newTx2","click",()=>openTx());
+  on("addAccount","click",()=>addAccount());
+  on("addCard","click",()=>addCard());
+  on("addBudget","click",addBudget);
+  on("addBill","click",addBill);
+  on("addGoal","click",addGoal);
+  on("addDebt","click",addDebt);
+  on("addInvestment","click",addInvestment);
+  on("addProject","click",addProject);
+  on("addContact","click",addContact);
+  on("txSearch","input",renderTx);
+  on("txFilter","change",renderTx);
+  if($("budgetMonth"))$("budgetMonth").value=month(today());
+  if($("reportMonth"))$("reportMonth").value=month(today());
+  on("budgetMonth","change",renderBudget);
+  on("reportMonth","change",renderReports);
+  on("refreshReport","click",renderReports);
+  on("exportReport","click",reportCSV);
+  on("printReport","click",printReport);
+  on("saveTop","click",()=>saveData());
+  on("changePassword","click",async()=>{
+    const current=$("currentPassword").value.trim(),next=$("newPassword").value.trim(),confirmNext=$("confirmPassword").value.trim();
+    if(!current||!next||!confirmNext)return toast("Preencha os três campos de senha.");
+    if(next!==confirmNext)return toast("A confirmação da nova senha não confere.");
+    if(next.length<8)return toast("A nova senha deve ter pelo menos 8 caracteres.");
+    const x=await api("/api/change-password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({current_password:current,new_password:next})});
+    if(x.j.ok){$("currentPassword").value="";$("newPassword").value="";$("confirmPassword").value="";$("passwordNotice").textContent="Senha alterada com sucesso.";toast("Senha alterada com sucesso");}
+    else $("passwordNotice").textContent=x.j.error||"Não foi possível alterar a senha.";
+  });
+  on("saveSettings","click",async()=>{DATA.settings.currency=$("setCurrency").value;DATA.settings.language=$("setLang").value;DATA.settings.closeDay=Number($("setClose").value)||10;DATA.settings.reserveMonths=Number($("setReserve").value)||0;DATA.settings.budgetName=$("setBudgetName").value||"My budget";await saveData(true);localStorage.setItem("gt_language",DATA.settings.language);renderAll();applyLanguage(DATA.settings.language);toast("Configurações salvas")});
+  on("logout","click",async()=>{await api("/api/logout",{method:"POST"});location.href="/login.html"});
+  on("themeBtn","click",()=>{const t=document.body.classList.contains("light")?"dark":"light";applyTheme(t);if(DATA){DATA.settings.theme=t;saveData(true)};renderAll()});
+  on("resetTheme","click",()=>{applyTheme("dark");if(DATA){DATA.settings.theme="dark";saveData(true)};renderAll();applyLanguage(DATA?.settings?.language||"English")});
+  on("langTop","change",e=>setLanguage(e.target.value));
+  on("setLang","change",e=>setLanguage(e.target.value));
+  document.querySelectorAll("#periodTabs button").forEach(b=>b.addEventListener("click",()=>{DASH_PERIOD=b.dataset.period;if(DATA)renderDashboard();applyLanguage(DATA?.settings?.language||"English")}));
+  on("upgrade","click",()=>{go("subscription");renderSubscription()});on("sidePlanBtn","click",()=>{go("subscription");renderSubscription()});on("billingPortal","click",openBillingPortal);
+  on("doImport","click",async()=>{const text=$("importBox").value;const a=text.includes("<OFX")||text.includes("<STMTTRN>")?parseOFX(text):parseCSV(text);if(!a.length)return toast("Nenhum lançamento reconhecido");DATA.transactions.push(...a);await saveData(true);renderAll();toast(a.length+" lançamento(s) importado(s)")});
+  on("clearImport","click",()=>{$("importBox").value=""});
+  on("exportAll","click",()=>download("globaltools-finance-backup.json",JSON.stringify(DATA,null,2)));
+  on("exportTx","click",()=>{const h="date,description,type,amount,category,account,status\n",rows=DATA.transactions.map(x=>[x.date,x.description,x.type,x.amount,x.category,x.account,x.status].map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\n");download("globaltools-transactions.csv",h+rows,"text/csv")});
+  window.addEventListener("error",e=>{console.error("[GlobalTools] JavaScript error",e.error||e.message);const n=$("dashNotice");if(n){n.classList.add("error");n.textContent="O painel encontrou um erro de interface. Recarregue a página e tente novamente."}});
+}
+async function init(){
+  const savedTheme="light";
+  localStorage.setItem("gt_theme","light");
+  applyTheme(savedTheme);
+  /* Start the UI with a local empty model so controls never depend on API latency. */
+  DATA=baseData({});
+  DATA.settings.theme="light";
+  bind();
+  renderAll();
+  applyLanguage(DATA.settings.language);
+  const sid=new URLSearchParams(location.search).get("session_id");
+  try{
+    /*
+      Primeiro tenta a sessão atual. Isso evita bloquear o painel em toda abertura
+      por uma nova consulta ao Stripe quando o usuário já está autenticado.
+    */
+    $("who").textContent="Validando seu acesso...";
+    let x=await api("/api/me");
+    if(!x.j.authenticated && sid){
+      $("who").textContent="Confirmando sua compra e preparando seu ambiente...";
+      const a=await api("/api/activate-session",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({session_id:sid})
+      });
+      if(!a.r.ok||!a.j.ok){
+        $("who").textContent=a.j.error||"Não foi possível validar a compra.";
+        return;
+      }
+      x=await api("/api/me");
+    }
+    if(!x.j.authenticated){
+      $("who").textContent="Modo local — sessão não reconhecida. Faça login para salvar seus dados.";
+      return;
+    }
+    ME=x.j.user;
+    const upgradeSid=new URLSearchParams(location.search).get("session_id");
+    const upgradeFlag=new URLSearchParams(location.search).get("upgrade");
+    if(upgradeSid&&upgradeFlag==="success"){
+      const c=await api("/api/confirm-upgrade",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_id:upgradeSid})});
+      if(c.r.ok&&c.j.user)ME=c.j.user;
+      history.replaceState({},document.title,"/account.html");
+    }
+    const d=await api("/api/finance/data");
+    if(!d.r.ok){
+      $("who").textContent=d.j.error||"Dados online indisponíveis — modo local ativo.";
+      return;
+    }
+    const remoteData=baseData(d.j.data);
+    const localData=loadLocalData();
+    const remoteHas=hasUserData(remoteData);
+    const localHas=hasUserData(localData);
+    const remoteTime=Date.parse(remoteData.updatedAt||"")||0;
+    const localTime=Date.parse(localData?.updatedAt||"")||0;
+    if(localHas && (!remoteHas || localTime>remoteTime)){
+      DATA=localData;
+      await saveData(true);
+      toast("Backup local restaurado para o servidor.");
+    }else{
+      DATA=remoteData;
+      cacheLocalData();
+    }
+    const preferred=localStorage.getItem("gt_language")||DATA.settings.language||"English";
+    DATA.settings.language=preferred;
+    if(DATA.settings.theme)applyTheme(localStorage.getItem("gt_theme")||DATA.settings.theme);
+    $("who").textContent=ME.email+" • Plano "+(ME.planLabel||ME.plan);
+    renderAll();
+    renderSubscription();
+    renderAccountDetails();
+    applyLanguage(preferred);
+  }catch(err){
+    console.error("[GlobalTools init]",err);
+    $("who").textContent="Dados online indisponíveis — modo local ativo.";
+  }
+}
+window.addEventListener("beforeunload",cacheLocalData);
+init();
+</script>
+</body>
+</html>
