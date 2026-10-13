@@ -562,9 +562,15 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate"});
     return res.end(html);
   }
+  const versionedAsset = (ext === ".js" || ext === ".css") && /[?&]v=[^&]+/.test(req.url || "");
+  const cacheControl = versionedAsset
+    ? "public, max-age=31536000, immutable"
+    : (ext === ".html" || ext === ".js" || ext === ".css")
+      ? "no-cache, no-store, must-revalidate"
+      : "public, max-age=86400";
   res.writeHead(200, {
     "Content-Type": types[ext] || "application/octet-stream",
-    "Cache-Control": ext === ".html" || ext === ".js" || ext === ".css" ? "no-cache, no-store, must-revalidate" : "public, max-age=86400"
+    "Cache-Control": cacheControl
   });
   fs.createReadStream(finalPath).pipe(res);
 });
