@@ -94,6 +94,35 @@ const server = http.createServer((req, res) => {
     return PUBLIC_SITE_URL || ("https://" + (req.headers.host || "localhost"));
   }
 
+  // Serve host-aware SEO files so the VPS does not publish the reserved .example domain.
+  if (urlPath === "/robots.txt") {
+    const base = siteUrl(req);
+    res.writeHead(200, {"Content-Type":"text/plain; charset=utf-8","Cache-Control":"no-cache"});
+    return res.end("User-agent: *\\nAllow: /\\nSitemap: " + base + "/sitemap.xml\\n");
+  }
+
+  if (urlPath === "/sitemap.xml") {
+    const base = siteUrl(req).replace(/&/g, "&amp;");
+    const pages = [
+      "/", "/store.html", "/sobre.html", "/contato.html", "/suporte.html",
+      "/privacy.html", "/terms.html", "/refund.html",
+      "/products/small-business-finance-dashboard.html",
+      "/products/cash-flow-planner.html",
+      "/products/freelancer-business-kit.html"
+    ];
+    try {
+      const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+      const slugs = Array.from(appSource.matchAll(/\\{slug:"([^"]+)",name:/g), match => match[1]);
+      slugs.forEach(slug => pages.push("/tools/" + slug + ".html"));
+    } catch (err) {
+      console.error("[GlobalTools sitemap]", err.message);
+    }
+    const urls = Array.from(new Set(pages)).map(page => "<url><loc>" + base + page + "</loc></url>").join("");
+    const xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + "</urlset>";
+    res.writeHead(200, {"Content-Type":"application/xml; charset=utf-8","Cache-Control":"no-cache"});
+    return res.end(xml);
+  }
+
   function formEncode(value) {
     return encodeURIComponent(value).replace(/%20/g, "+");
   }
