@@ -429,7 +429,7 @@ const server = http.createServer((req, res) => {
           .map(([lang,route]) => '<link rel="alternate" hreflang="'+lang+'" href="'+siteUrl(req)+route+'">').join("")
         : "";
       const htmlLang = ui ? ui.htmlLang : "en-US";
-      const pageTitle = ui ? name + " | GlobalTools" : name + " — Free Online Tool | GlobalTools";
+      const pageTitle = ui ? name + (locale === "pt" ? " grátis online | GlobalTools" : locale === "es" ? " gratis online | GlobalTools" : " en ligne | GlobalTools") : name + " — Free Online Tool | GlobalTools";
       const groups = {
         text:["This tool helps you inspect, clean or transform text for a specific task.","Paste or type a short sample into the input field.","Review the options and confirm the desired output.","Run the tool and copy or download the result.","Line breaks, whitespace, punctuation and the language of the input can affect the result."],
         developer:["This developer utility helps with a common data or code task, such as formatting, validation, encoding or transformation.","Paste a small sample of code or data into the input field.","Run the tool and compare the result with the original sample.","Review the output before using it in a live application.","Never paste private keys, production credentials, passwords or access tokens into a tool unless you fully understand the processing path."],
@@ -487,8 +487,8 @@ const server = http.createServer((req, res) => {
       ];
       const faqHtml=faq.map(x=>'<div><h3>'+safe(x[0])+'</h3><p>'+safe(x[1])+'</p></div>').join('');
       const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","inLanguage":locale==="pt"?"pt-BR":locale,"mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
-      const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":pageUrl,"inLanguage":locale==="pt"?"pt-BR":locale,"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
-      const metaDescription = ui ? desc + " " + purpose : desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.";
+      const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":pageUrl,"inLanguage":locale==="pt"?"pt-BR":locale,"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/","logo":{"@type":"ImageObject","url":siteUrl(req)+"/icon.svg","width":512,"height":512}},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
+      const metaDescription = ui ? desc : desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.";
       const languageLinks = [["en","English","/tools/"+slug+".html"],["pt-BR","Português","/pt/tools/"+slug+".html"],["es","Español","/es/tools/"+slug+".html"],["fr","Français","/fr/tools/"+slug+".html"]]
         .filter(([lang]) => lang === "en" || !!LOCALIZED_TOOL_COPY[lang==="pt-BR"?"pt":lang]?.[slug])
         .map(([lang,label,href]) => '<a href="'+href+'" hreflang="'+lang+'">'+label+'</a>').join(' · ');
@@ -539,6 +539,7 @@ const server = http.createServer((req, res) => {
     let html = fs.readFileSync(finalPath, "utf8");
     html = html.replaceAll("G-DM7CKZRD30", "G-061NQ52GBQ");
     html = html.replaceAll("https://globaltools-international.example", siteUrl(req));
+    if (!html.includes('href="/icon.svg"')) html = html.replace(/<head>/i, '<head><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="manifest" href="/site.webmanifest">');
     const noAdsPage = urlPath === "/login.html" ||
       urlPath === "/account.html" ||
       urlPath === "/account-success.html" ||
