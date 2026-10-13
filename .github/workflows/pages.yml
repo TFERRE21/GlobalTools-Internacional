@@ -98,6 +98,13 @@ jobs:
             echo "AdSense must not load on account pages"
             exit 1
           fi
+          grep -F 'name="robots" content="noindex,nofollow"' /tmp/account.html
+          curl -fsS http://127.0.0.1:3500/products/cash-flow-planner-success.html -o /tmp/purchase-success.html
+          if grep -F 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/purchase-success.html; then
+            echo "AdSense must not load on purchase-success pages"
+            exit 1
+          fi
+          grep -F 'name="robots" content="noindex,nofollow"' /tmp/purchase-success.html
           ticket_response=$(curl -fsS -X POST http://127.0.0.1:3500/api/support/ticket -H 'Content-Type: application/json' -d '{"name":"CI Tester","email":"ci@example.com","message":"Automated support ticket storage test","page":"/contato.html"}')
           echo "$ticket_response" | grep -F '"ok":true'
           test -s /tmp/globaltools-international-ci-data/support-tickets.json
