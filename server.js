@@ -409,8 +409,9 @@ const server = http.createServer((req, res) => {
         "jwt-decoder":["Display the header and payload sections of a JSON Web Token for inspection.","Paste a test JWT and review the decoded header and claims.","Decoding does not verify a signature or prove that a token is valid. Never paste a live access token or secret token into an untrusted environment."],
         "hash-generator":["Calculate a SHA-256 hash from the text entered in the tool.","Enter a sample phrase and compare its hexadecimal digest with another SHA-256 implementation.","A hash is not reversible encryption and SHA-256 alone is not an appropriate password-storage scheme."],
       };
+      const g=groups[current.cat]||["This tool provides a focused utility for a common digital task.","Enter the requested information or select a supported file.","Run the operation and review the result.","Copy or download the output if it meets your needs.","Output can depend on browser support, input format, library behavior or external services."];
       const sp=special[slug];
-      const purpose=sp?sp[0]:g[0], example=sp?sp[1]:"Comece com uma entrada curta e não sensível para conferir o comportamento antes de processar conteúdo importante.", notes=sp?sp[2]:g[4];
+      const purpose=sp?sp[0]:g[0], example=sp?sp[1]:"Start with a short, non-sensitive sample to check the result before processing important content.", notes=sp?sp[2]:g[4];
       const steps = [g[1],g[2],g[3]].map((x,i)=>'<li>'+safe(x)+'</li>').join('');
       const faq=[
          ["What is "+name+"?",desc+" This online tool helps you complete the task without installing separate software."],
