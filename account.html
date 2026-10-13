@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GlobalTools Finance — Painel</title>
+<title>GlobalTools Finance — Dashboard</title>
 <style>
 :root{--bg:#080a0d;--panel:#11151b;--panel2:#171c23;--line:#29313b;--text:#f4f7fb;--muted:#9ca6b5;--green:#32d583;--red:#ff6672;--blue:#62a8ff;--gold:#f4c95d;--input:#0c1015}
 body.light{--bg:#f3f5f8;--panel:#fff;--panel2:#f7f9fb;--line:#d9e0e8;--text:#17202b;--muted:#687384;--green:#159a5b;--red:#d63b4b;--blue:#2878d0;--gold:#a97800;--input:#fff}
@@ -187,7 +187,7 @@ let ME=null,DATA=null,currentModalSave=null;
 const $=id=>document.getElementById(id), esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])), uid=p=>(p||"id")+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7), today=()=>new Date().toISOString().slice(0,10), month=d=>String(d||"").slice(0,7);
 const sum=(a,f)=>a.reduce((n,x)=>n+(Number(f(x))||0),0);
 function money(n,c){return new Intl.NumberFormat(c==="USD"?"en-US":c==="EUR"?"de-DE":c==="GBP"?"en-GB":"en-US",{style:"currency",currency:c||"USD"}).format(Number(n)||0)}
-function baseData(d){d=d&&typeof d==="object"?d:{};return Object.assign({transactions:[],accounts:[],cards:[],budgets:[],bills:[],goals:[],investments:[],debts:[],projects:[],contacts:[],documents:[],categories:["Moradia","Alimentação","Transporte","Saúde","Educação","Lazer","Assinaturas","Impostos","Compras","Investimentos","Outros"],settings:{currency:"USD",language:"English",closeDay:10,reserveMonths:6,budgetName:"My budget",theme:"dark"}},d)}
+function baseData(d){d=d&&typeof d==="object"?d:{};return Object.assign({transactions:[],accounts:[],cards:[],budgets:[],bills:[],goals:[],investments:[],debts:[],projects:[],contacts:[],documents:[],categories:["Housing","Food","Transport","Health","Education","Entertainment","Subscriptions","Taxes","Shopping","Investments","Other"],settings:{currency:"USD",language:"English",closeDay:10,reserveMonths:6,budgetName:"My budget",theme:"dark"}},d)}
 async function api(u,o={}){const c=new AbortController();const t=setTimeout(()=>c.abort(),12000);try{const r=await fetch(u,{...o,credentials:"same-origin",cache:"no-store",signal:c.signal});let j={};try{j=await r.json()}catch{}return{r,j}}catch(e){return{r:{ok:false,status:0},j:{ok:false,error:e.name==="AbortError"?"Tempo esgotado. Tente novamente.":"Falha de conexão com o servidor."}}}finally{clearTimeout(t)}}
 function toast(s){$("toast").textContent=s;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2400)}
 const LOCAL_DATA_KEY="gt_finance_backup_v2";
@@ -347,7 +347,7 @@ async function startUpgrade(plan){const x=await api("/api/upgrade",{method:"POST
 async function openBillingPortal(){const x=await api("/api/billing-portal",{method:"POST"});if(x.j.url)return location.href=x.j.url;toast(x.j.error||"Portal de assinatura indisponível.")}
 function renderSubscription(){
   const current=ME?.plan||"starter";
-  const plans=[{id:"starter",name:"Starter",price:"US$ 14,90",desc:"Essencial para organizar sua vida financeira.",items:["Dashboard financeiro","Transações e contas","Orçamento e metas"]},{id:"business",name:"Business",price:"US$ 29,90 / mês",desc:"Mais recursos para gestão financeira.",items:["Tudo do Starter","Relatórios e previsões","Gestão avançada"]},{id:"unlimited",name:"Unlimited",price:"US$ 49,90 / mês",desc:"Experiência completa do GlobalTools Finance.",items:["Tudo do Business","Recursos avançados","Multiempresa"]}];
+  const plans=[{id:"starter",name:"Starter",price:"$14.90",desc:"Essential tools to organize your finances.",items:["Financial dashboard","Transactions and accounts","Budget and goals"]},{id:"business",name:"Business",price:"$29.90 / month",desc:"More tools for finance management.",items:["Everything in Starter","Reports and forecasts","Advanced management"]},{id:"unlimited",name:"Unlimited",price:"$49.90 / month",desc:"The complete GlobalTools Finance experience.",items:["Everything in Business","Advanced features","Multiple businesses"]}];
   const grid=$("planGrid");if(!grid)return;
   grid.innerHTML=plans.map(p=>{const isCurrent=p.id===current,higher=planRank(p.id)>planRank(current),label=isCurrent?"Plano atual":higher?"Alterar para "+p.name:"Gerenciar assinatura",action=isCurrent?"toast('Este já é o seu plano atual.')":higher?"choosePlan('"+p.id+"')":"openBillingPortal()";return '<div class="plan-card '+(isCurrent?"current":"")+'">'+(isCurrent?'<span class="plan-badge">ATUAL</span>':"")+'<h3>'+p.name+'</h3><div class="plan-price">'+p.price+'</div><div class="small-note">'+p.desc+'</div><ul>'+p.items.map(i=>"<li>"+i+"</li>").join("")+'</ul><button class="'+(isCurrent?"":"btn-green")+'" onclick="'+action+'">'+label+'</button></div>'}).join("");
   if($("subscriptionCurrent"))$("subscriptionCurrent").textContent=ME?.planLabel||current;
