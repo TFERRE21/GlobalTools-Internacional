@@ -104,7 +104,7 @@ jobs:
           curl -fsS http://127.0.0.1:3500/es/tools/pdf-to-word.html -o /tmp/pdf-to-word-es.html
           curl -fsS http://127.0.0.1:3500/fr/tools/compress-pdf.html -o /tmp/compress-pdf-fr.html
           grep -F '<html lang="pt-BR">' /tmp/word-to-pdf-pt.html
-          grep -F '<title>Word para PDF | GlobalTools</title>' /tmp/word-to-pdf-pt.html
+          grep -F '<title>Word para PDF grátis online | GlobalTools</title>' /tmp/word-to-pdf-pt.html
           grep -F 'href="https://globaltoolsnow.com/pt/tools/word-to-pdf.html"' /tmp/word-to-pdf-pt.html
           grep -F 'Ferramentas online gratuitas para tarefas do dia a dia.' /tmp/word-to-pdf-pt.html
           if grep -F 'href="/tools/word-to-text.html"' /tmp/word-to-pdf-pt.html; then
