@@ -21,7 +21,12 @@
 
   function switchLanguage(lang){
     localStorage.setItem(STORAGE_KEY,lang);
-    if(lang==="en") clearGoogleCookie();
+    if(typeof window.applyLanguage==="function" && (lang==="en" || lang==="pt")){
+      clearGoogleCookie();
+      window.applyLanguage(lang);
+      return;
+    }
+    if(lang==="en" || lang==="pt") clearGoogleCookie();
     else setGoogleCookie(lang);
     location.reload();
   }
