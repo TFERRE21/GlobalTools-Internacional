@@ -440,7 +440,7 @@ const server = http.createServer((req, res) => {
         '<section class="info"><h2>About '+safe(name)+'</h2><p>'+safe(purpose)+'</p><h2>How to use</h2><ol>'+steps+'</ol><h2>Practical example</h2><p>'+safe(example)+'</p><h2>Limitations and precautions</h2><p>'+safe(notes)+'</p><h2>Frequently asked questions</h2><div class="faq">'+faqHtml+'</div>',
         related.length?'<h2>Related tools</h2><div class="related-tools">'+relatedHtml+'</div>':'',
         '<h2>Privacy and processing</h2><p>GlobalTools prioritizes in-browser processing whenever technically possible. For details about cookies, advertising, analytics and external services, read our <a href="/privacy.html">Privacy Policy</a>. For questions or bug reports, use the <a href="/contato.html">contact page</a>.</p></section></main>',
-        '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">O</span>GlobalTools</div><p>Free online tools for everyone.</p></div><div class="footer-links"><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></footer><script src="/support.js?v=20261013-03"></script></body></html>'
+        '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span>GlobalTools</div><p>Free online tools for everyone.</p></div><div class="footer-links"><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></footer><script src="/support.js?v=20261013-03"></script></body></html>'
       ].join('');
       res.writeHead(200, {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-cache, no-store, must-revalidate"});
       return res.end(html);
