@@ -146,6 +146,13 @@ jobs:
           PY
           curl -fsS http://127.0.0.1:3500/tools/compress-pdf.html -o /tmp/compress-pdf.html
           grep -F 'This tool re-saves a PDF using a browser-based PDF library.' /tmp/compress-pdf.html
+          grep -F '<title>Compress PDF Online Free | GlobalTools</title>' /tmp/compress-pdf.html
+          grep -F 'Try this free online PDF compressor to reduce file size.' /tmp/compress-pdf.html
+          curl -fsS http://127.0.0.1:3500/tools/word-to-pdf.html -o /tmp/word-to-pdf-en.html
+          grep -F '<title>Word to PDF Converter Free Online | GlobalTools</title>' /tmp/word-to-pdf-en.html
+          grep -F 'Use this free online Word to PDF converter' /tmp/word-to-pdf-en.html
+          curl -fsS http://127.0.0.1:3500/tools/pdf-to-word.html -o /tmp/pdf-to-word-en.html
+          grep -F '<title>PDF to Word Converter Free Online | GlobalTools</title>' /tmp/pdf-to-word-en.html
           # Avoid loading gtag.js twice on tool pages; one library load configures both GA4 and Google Ads.
           test "$(grep -o 'googletagmanager.com/gtag/js?id=' /tmp/compress-pdf.html | wc -l)" -eq 1
           grep -F 'gtag("config","G-061NQ52GBQ");gtag("config","AW-17240722145");' /tmp/compress-pdf.html
