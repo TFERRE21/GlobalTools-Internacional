@@ -509,7 +509,7 @@ const server = http.createServer((req, res) => {
         related.length?'<h2>Related tools</h2><div class="related-tools">'+relatedHtml+'</div>':'',
         '<h2>'+(ui?ui.processing:"Privacy and processing")+'</h2><p>GlobalTools prioritizes in-browser processing whenever technically possible. '+(ui?ui.privacyText:'For details about cookies, advertising, analytics and external services, read our')+' <a href="/privacy.html">'+(ui?ui.privacy:"Privacy Policy")+'</a>. '+contactHint+'<a href="/contato.html">'+(ui?ui.contact:"contact page")+'</a>.</p></section></main>',
         '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span>GlobalTools</div><p>Free online tools for everyone.</p></div><div class="footer-links"><a href="/sobre.html">'+(ui?ui.about:"About")+'</a><a href="/contato.html">'+(ui?ui.contact:"Contact")+'</a><a href="/privacy.html">'+(ui?ui.privacy:"Privacy")+'</a><a href="/terms.html">'+(ui?ui.terms:"Terms")+'</a></div><div class="language-links">'+languageLinks+'</div></footer><script src="/support.js?v=20261013-03"></script></body></html>'
-      ].join('');      ].join('');
+      ].join('');
       res.writeHead(200, {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-cache, no-store, must-revalidate"});
       return res.end(html);
     }
