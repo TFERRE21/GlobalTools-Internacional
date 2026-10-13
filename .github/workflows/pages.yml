@@ -25,3 +25,19 @@ jobs:
           node --check server.js
           node --check gateway.js
           node --check app.js
+      - name: Smoke test domain-aware SEO endpoints
+        env:
+          PORT: 3400
+          PUBLIC_SITE_URL: https://globaltools.example
+        run: |
+          node server.js &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3400/robots.txt -o /tmp/robots.txt; then break; fi
+            sleep 1
+          done
+          grep -F "Sitemap: https://globaltools.example/sitemap.xml" /tmp/robots.txt
+          curl -fsS http://127.0.0.1:3400/sitemap.xml -o /tmp/sitemap.xml
+          grep -F "https://globaltools.example/tools/word-counter.html" /tmp/sitemap.xml
+          curl -fsS http://127.0.0.1:3400/products/small-business-finance-dashboard.html | grep -F "https://globaltools.example/products/small-business-finance-dashboard.html"
