@@ -28,7 +28,10 @@ const LOCALIZED_UI = {"pt":{"htmlLang":"pt-BR","languageName":"Português","home
 
 const server = http.createServer((req, res) => {
   let urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
+  const localizedToolRequest = urlPath.match(/^\/(pt|es|fr)\/tools\/([a-z0-9-]+)\.html$/i);
+  const requestedToolLocale = localizedToolRequest ? localizedToolRequest[1].toLowerCase() : "en";
   if (urlPath === "/") urlPath = "/index.html";
+  if (localizedToolRequest) urlPath = "/tools/" + localizedToolRequest[2] + ".html";
 
   const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
   const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -112,17 +115,42 @@ const server = http.createServer((req, res) => {
       "/privacy.html", "/terms.html", "/refund.html",
       "/products/small-business-finance-dashboard.html",
       "/products/cash-flow-planner.html",
-      "/products/freelancer-business-kit.html"
+      "/products/freelancer-business-kit.html",
+      "/pt/", "/es/", "/fr/"
     ];
     try {
       const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
       const slugs = Array.from(appSource.matchAll(/\{slug:"([^"]+)",name:/g), match => match[1]);
       slugs.forEach(slug => pages.push("/tools/" + slug + ".html"));
+      LOCALIZED_TOOL_SLUGS.forEach(slug => {
+        ["pt","es","fr"].forEach(locale => pages.push("/" + locale + "/tools/" + slug + ".html"));
+      });
     } catch (err) {
       console.error("[GlobalTools sitemap]", err.message);
     }
-    const urls = Array.from(new Set(pages)).map(page => "<url><loc>" + base + page + "</loc></url>").join("");
-    const xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + "</urlset>";
+
+    const localizedAlternates = new Map();
+    const addAlternates = paths => {
+      const map = {};
+      paths.forEach(([hreflang, path]) => { map[hreflang] = path; });
+      paths.forEach(([, path]) => localizedAlternates.set(path, map));
+    };
+    addAlternates([["en","/"],["pt-BR","/pt/"],["es","/es/"],["fr","/fr/"]]);
+    LOCALIZED_TOOL_SLUGS.forEach(slug => addAlternates([
+      ["en","/tools/" + slug + ".html"],
+      ["pt-BR","/pt/tools/" + slug + ".html"],
+      ["es","/es/tools/" + slug + ".html"],
+      ["fr","/fr/tools/" + slug + ".html"]
+    ]));
+
+    const urls = Array.from(new Set(pages)).map(page => {
+      const loc = base + page;
+      const alternates = localizedAlternates.get(page);
+      const links = alternates ? Object.entries({...alternates, "x-default": alternates.en})
+        .map(([lang, altPath]) => '<xhtml:link rel="alternate" hreflang="' + lang + '" href="' + base + altPath + '"/>').join("") : "";
+      return "<url><loc>" + loc + "</loc>" + links + "</url>";
+    }).join("");
+    const xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">' + urls + "</urlset>";
     res.writeHead(200, {"Content-Type":"application/xml; charset=utf-8","Cache-Control":"no-cache"});
     return res.end(xml);
   }
