@@ -153,6 +153,9 @@ jobs:
             echo "Tool pages should use native localized links instead of the translation loader"
             exit 1
           fi
+          # Versioned local JS/CSS can be cached for repeat visits; URLs change when assets change.
+          curl -fsS -D /tmp/app-headers -o /dev/null 'http://127.0.0.1:3500/app.js?v=20261013-03'
+          grep -iF 'Cache-Control: public, max-age=31536000, immutable' /tmp/app-headers
           curl -fsS http://127.0.0.1:3500/account.html -o /tmp/account.html
           if grep -F 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/account.html; then
             echo "AdSense must not load on account pages"
