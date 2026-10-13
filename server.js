@@ -394,17 +394,41 @@ const server = http.createServer((req, res) => {
   const toolMatch = urlPath.match(/^\/tools\/([a-z0-9-]+)\.html$/i);
   if (toolMatch) {
     const slug = toolMatch[1];
+    const locale = requestedToolLocale;
+    const localizedTool = LOCALIZED_TOOL_COPY[locale] && LOCALIZED_TOOL_COPY[locale][slug];
+    if (locale !== "en" && !localizedTool) {
+      res.writeHead(404, {"Content-Type":"text/plain; charset=utf-8"});
+      return res.end("Localized version not available.");
+    }
     const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
     const match = app.match(new RegExp('\\{slug:"'+slug+'",name:"([^"]+)",desc:"([^"]+)"'));
     if (match) {
-      const name = match[1], desc = match[2];
+      const name = localizedTool ? localizedTool.name : match[1];
+      const desc = localizedTool ? localizedTool.desc : match[2];
+      const ui = LOCALIZED_UI[locale] || null;
       const safe = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
       const allTools = [...app.matchAll(/\{slug:"([^"]+)",name:"([^"]+)",desc:"([^"]+)",cat:"([^"]+)"\}/g)].map(m => ({slug:m[1],name:m[2],desc:m[3],cat:m[4]}));
       const current = allTools.find(t => t.slug === slug) || {slug,name,desc,cat:"tools"};
+      const localizedUrlFor = toolSlug => locale !== "en" && LOCALIZED_TOOL_COPY[locale] && LOCALIZED_TOOL_COPY[locale][toolSlug]
+        ? "/" + locale + "/tools/" + toolSlug + ".html"
+        : "/tools/" + toolSlug + ".html";
       const related = allTools.filter(t => t.slug !== slug && t.cat === current.cat).slice(0,6);
-      const relatedHtml = related.map(t => '<a class="related-tool" href="/tools/'+t.slug+'.html"><strong>'+safe(t.name)+'</strong><span>'+safe(t.desc)+'</span></a>').join('');
-
-      const groups = {
+      const relatedHtml = related.map(t => {
+        const translated = locale !== "en" && LOCALIZED_TOOL_COPY[locale] && LOCALIZED_TOOL_COPY[locale][t.slug];
+        const relatedName = translated ? translated.name : t.name;
+        const relatedDesc = translated ? translated.desc : t.desc;
+        return '<a class="related-tool" href="'+localizedUrlFor(t.slug)+'"><strong>'+safe(relatedName)+'</strong><span>'+safe(relatedDesc)+'</span></a>';
+      }).join('');
+      const localePrefix = locale === "en" ? "" : "/" + locale;
+      const localToolPath = localePrefix + "/tools/" + slug + ".html";
+      const pageUrl = siteUrl(req) + localToolPath;
+      const alternateLinks = LOCALIZED_TOOL_SLUGS.includes(slug)
+        ? [["en","/tools/"+slug+".html"],["pt-BR","/pt/tools/"+slug+".html"],["es","/es/tools/"+slug+".html"],["fr","/fr/tools/"+slug+".html"],["x-default","/tools/"+slug+".html"]]
+          .map(([lang,route]) => '<link rel="alternate" hreflang="'+lang+'" href="'+siteUrl(req)+route+'">').join("")
+        : "";
+      const htmlLang = ui ? ui.htmlLang : "en-US";
+      const pageTitle = ui ? name + " | GlobalTools" : name + " — Free Online Tool | GlobalTools";
+      const groups = {      const groups = {
         text:["This tool helps you inspect, clean or transform text for a specific task.","Paste or type a short sample into the input field.","Review the options and confirm the desired output.","Run the tool and copy or download the result.","Line breaks, whitespace, punctuation and the language of the input can affect the result."],
         developer:["This developer utility helps with a common data or code task, such as formatting, validation, encoding or transformation.","Paste a small sample of code or data into the input field.","Run the tool and compare the result with the original sample.","Review the output before using it in a live application.","Never paste private keys, production credentials, passwords or access tokens into a tool unless you fully understand the processing path."],
         pdf:["This PDF utility is designed for a particular document workflow, such as converting, organizing or inspecting PDF files.","Choose compatible PDF files and review any available instructions.","Start with a small, non-sensitive sample to check the output.","Open the generated file and confirm that the result is complete and readable.","Scanned pages, complex layouts, embedded fonts, images and encryption can affect what a browser-based conversion can preserve."],
@@ -443,37 +467,49 @@ const server = http.createServer((req, res) => {
       };
       const g=groups[current.cat]||["This tool provides a focused utility for a common digital task.","Enter the requested information or select a supported file.","Run the operation and review the result.","Copy or download the output if it meets your needs.","Output can depend on browser support, input format, library behavior or external services."];
       const sp=special[slug];
-      const purpose=sp?sp[0]:g[0], example=sp?sp[1]:"Start with a short, non-sensitive sample to check the result before processing important content.", notes=sp?sp[2]:g[4];
-      const steps = [g[1],g[2],g[3]].map((x,i)=>'<li>'+safe(x)+'</li>').join('');
-      const faq=[
-         ["What is "+name+"?",desc+" This online tool helps you complete the task without installing separate software."],
-         ["How do I use "+name+"?","Enter the requested data or select a supported file, run the tool, and check the result before using it."],
-         ["Do I need to create an account?","No. The core GlobalTools tools are designed to work without an account."],
-         ["Is my data uploaded to the server?","When local processing is supported, the task runs in your browser. Some tools load external libraries or send the input needed for an external service; review the tool-specific notes before submitting sensitive data."]
-       ];
+      const purpose=localizedTool ? localizedTool.purpose : (sp ? sp[0] : g[0]);
+      const example=localizedTool ? localizedTool.example : (sp ? sp[1] : "Start with a short, non-sensitive sample to check the result before processing important content.");
+      const notes=localizedTool ? localizedTool.notes : (sp ? sp[2] : g[4]);
+      const steps = (ui ? ui.steps : [g[1],g[2],g[3]]).map(x=>'<li>'+safe(x)+'</li>').join('');
+      const fillFaq = template => template.replace(/\{name\}/g,name).replace(/\{desc\}/g,desc);
+      const faq = ui ? [
+        [fillFaq(ui.faqWhat),fillFaq(ui.faqWhatText)],
+        [fillFaq(ui.faqHow),fillFaq(ui.faqHowText)],
+        [ui.faqAccount,ui.faqAccountText],
+        [ui.faqData,ui.faqDataText]
+      ] : [
+        ["What is "+name+"?",desc+" This online tool helps you complete the task without installing separate software."],
+        ["How do I use "+name+"?","Enter the requested data or select a supported file, run the tool, and check the result before using it."],
+        ["Do I need to create an account?","No. The core GlobalTools tools are designed to work without an account."],
+        ["Is my data uploaded to the server?","When local processing is supported, the task runs in your browser. Some tools load external libraries or send the input needed for an external service; review the tool-specific notes before submitting sensitive data."]
+      ];
       const faqHtml=faq.map(x=>'<div><h3>'+safe(x[0])+'</h3><p>'+safe(x[1])+'</p></div>').join('');
-      const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
-      const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":siteUrl(req)+"/tools/"+slug+".html","isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
-      const pageUrl=siteUrl(req)+"/tools/"+slug+".html";
-      const html=[
-        '<!doctype html><html lang="en-US"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
-        '<title>'+safe(name)+' — Free Online Tool | GlobalTools</title>',
-        '<meta name="description" content="'+safe(desc)+' Learn how to use the tool, review examples, and understand its limitations with GlobalTools.">',
-        '<meta name="robots" content="index,follow"><link rel="canonical" href="'+pageUrl+'">',
-        '<meta property="og:type" content="website"><meta property="og:title" content="'+safe(name)+' — GlobalTools"><meta property="og:description" content="'+safe(desc)+'"><meta property="og:url" content="'+pageUrl+'"><meta property="og:site_name" content="GlobalTools"><meta name="twitter:card" content="summary">',
+      const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","inLanguage":locale==="pt"?"pt-BR":locale,"mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
+      const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":pageUrl,"inLanguage":locale==="pt"?"pt-BR":locale,"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
+      const metaDescription = ui ? desc + " " + purpose : desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.";
+      const languageLinks = [["en","English","/tools/"+slug+".html"],["pt-BR","Português","/pt/tools/"+slug+".html"],["es","Español","/es/tools/"+slug+".html"],["fr","Français","/fr/tools/"+slug+".html"]]
+        .filter(([lang]) => lang === "en" || !!LOCALIZED_TOOL_COPY[lang==="pt-BR"?"pt":lang]?.[slug])
+        .map(([lang,label,href]) => '<a href="'+href+'" hreflang="'+lang+'">'+label+'</a>').join(' · ');
+      const homePath = locale === "en" ? "/" : "/" + locale + "/";
+      const html=[      const html=[
+        '<!doctype html><html lang="'+htmlLang+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+        '<title>'+safe(pageTitle)+'</title>',
+        '<meta name="description" content="'+safe(metaDescription)+'">',
+        '<meta name="robots" content="index,follow"><link rel="canonical" href="'+pageUrl+'">'+alternateLinks,
+        '<meta property="og:type" content="website"><meta property="og:title" content="'+safe(pageTitle)+'"><meta property="og:description" content="'+safe(metaDescription)+'"><meta property="og:url" content="'+pageUrl+'"><meta property="og:site_name" content="GlobalTools"><meta name="twitter:card" content="summary">',
         '<script type="application/ld+json">'+appSchema+'</script><script type="application/ld+json">'+faqSchema+'</script>',
         '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>',
         '<script async src="https://www.googletagmanager.com/gtag/js?id=G-061NQ52GBQ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-061NQ52GBQ");</script>',
-        '<link rel="stylesheet" href="/styles.css?v=20261013-03"><script defer src="/app.js?v=20261013-03"></script><!-- Google Ads tag --><script async src="https://www.googletagmanager.com/gtag/js?id=AW-17240722145"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","AW-17240722145");</script></head>',
-        '<body><header class="site-header"><a class="brand" href="/"><span class="brand-mark">G</span>GlobalTools</a><nav class="main-nav"><a href="/">Tools</a><a href="/#categories">Categories</a><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><label class="language-switcher"><span>🌐</span><select id="languageSelect"><option value="en" selected>English</option><option value="pt">Português</option><option value="es">Español</option><option value="fr">Français</option></select></label></nav></header>',
-        '<main class="tool-page"><div class="breadcrumbs"><a href="/">Home</a> / '+safe(name)+'</div><section class="tool-hero"><div class="tool-kicker">GLOBALTOOLS • ONLINE TOOL</div><h1>'+safe(name)+'</h1><p class="intro">'+safe(desc)+'</p></section>',
-        '<div class="tool-workspace"><div id="tool" class="tool-box"><div id="dropZone" class="upload-visual file-upload-visual"><div class="upload-icon">↥</div><h2>Select files</h2><p>or drag and drop files here</p></div><textarea id="input" aria-label="'+safe(name)+'" placeholder="Enter or paste your data..."></textarea><button id="action" class="btn primary-action">Run tool</button><div id="result" class="result">Your result will appear here.</div></div>',
-        '<aside class="tool-side"><div class="side-card"><strong>Private when possible</strong><p>Processing happens in your browser whenever the technology allows.</p></div><div class="side-card"><strong>Free to use</strong><p>The core tools do not require an account.</p></div><div class="side-card"><strong>Clear guidance</strong><p>Review examples and limitations before using the result for an important task.</p></div></aside></div>',
-        '<section class="info"><h2>About '+safe(name)+'</h2><p>'+safe(purpose)+'</p><h2>How to use</h2><ol>'+steps+'</ol><h2>Practical example</h2><p>'+safe(example)+'</p><h2>Limitations and precautions</h2><p>'+safe(notes)+'</p><h2>Frequently asked questions</h2><div class="faq">'+faqHtml+'</div>',
+        '<link rel="stylesheet" href="/styles.css?v=20261013-03"><script>try{localStorage.setItem("globaltools-international-language-v1",'+JSON.stringify(locale)+')}catch(e){}</script><script defer src="/app.js?v=20261013-03"></script><!-- Google Ads tag --><script async src="https://www.googletagmanager.com/gtag/js?id=AW-17240722145"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","AW-17240722145");</script></head>',
+        '<body><header class="site-header"><a class="brand" href="'+homePath+'"><span class="brand-mark">G</span>GlobalTools</a><nav class="main-nav"><a href="'+homePath+'">'+(ui?ui.home:"Tools")+'</a><a href="/#categories">'+(ui?ui.categories:"Categories")+'</a><a href="/sobre.html">'+(ui?ui.about:"About")+'</a><a href="/contato.html">'+(ui?ui.contact:"Contact")+'</a><a href="/privacy.html">'+(ui?ui.privacy:"Privacy")+'</a></nav><div class="language-links">'+languageLinks+'</div></header>',
+        '<main class="tool-page"><div class="breadcrumbs"><a href="'+homePath+'">'+(ui?ui.home:"Home")+'</a> / '+safe(name)+'</div><section class="tool-hero"><div class="tool-kicker">'+(ui?ui.kicker:"GLOBALTOOLS • ONLINE TOOL")+'</div><h1>'+safe(name)+'</h1><p class="intro">'+safe(desc)+'</p></section>',
+        '<div class="tool-workspace"><div id="tool" class="tool-box"><div id="dropZone" class="upload-visual file-upload-visual"><div class="upload-icon">↥</div><h2>'+(ui?ui.selectFiles:"Select files")+'</h2><p>'+(ui?ui.dropHint:"or drag and drop files here")+'</p></div><textarea id="input" aria-label="'+safe(name)+'" placeholder="'+(ui?ui.enterData:"Enter or paste your data...")+'"></textarea><button id="action" class="btn primary-action">'+(ui?ui.run:"Run tool")+'</button><div id="result" class="result">'+(ui?ui.result:"Your result will appear here.")+'</div></div>',
+        '<aside class="tool-side"><div class="side-card"><strong>'+(ui?ui.privateTitle:"Private when possible")+'</strong><p>'+(ui?ui.privateText:"Processing happens in your browser whenever the technology allows.")+'</p></div><div class="side-card"><strong>'+(ui?ui.freeTitle:"Free to use")+'</strong><p>'+(ui?ui.freeText:"The core tools do not require an account.")+'</p></div><div class="side-card"><strong>'+(ui?ui.guidanceTitle:"Clear guidance")+'</strong><p>'+(ui?ui.guidanceText:"Review examples and limitations before using the result for an important task.")+'</p></div></aside></div>',
+        '<section class="info"><h2>'+(ui?ui.aboutTool:"About")+' '+safe(name)+'</h2><p>'+safe(purpose)+'</p><h2>'+(ui?ui.howTo:"How to use")+'</h2><ol>'+steps+'</ol><h2>'+(ui?ui.example:"Practical example")+'</h2><p>'+safe(example)+'</p><h2>'+(ui?ui.limitations:"Limitations and precautions")+'</h2><p>'+safe(notes)+'</p><h2>'+(ui?ui.faq:"Frequently asked questions")+'</h2><div class="faq">'+faqHtml+'</div>',
         related.length?'<h2>Related tools</h2><div class="related-tools">'+relatedHtml+'</div>':'',
-        '<h2>Privacy and processing</h2><p>GlobalTools prioritizes in-browser processing whenever technically possible. For details about cookies, advertising, analytics and external services, read our <a href="/privacy.html">Privacy Policy</a>. For questions or bug reports, use the <a href="/contato.html">contact page</a>.</p></section></main>',
-        '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span>GlobalTools</div><p>Free online tools for everyone.</p></div><div class="footer-links"><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></footer><script src="/support.js?v=20261013-03"></script></body></html>'
-      ].join('');
+        '<h2>'+(ui?ui.processing:"Privacy and processing")+'</h2><p>GlobalTools prioritizes in-browser processing whenever technically possible. '+(ui?ui.privacyText:'For details about cookies, advertising, analytics and external services, read our')+' <a href="/privacy.html">'+(ui?ui.privacy:"Privacy Policy")+'</a>. '+(ui?'Para perguntas ou problemas, use o ':'For questions or bug reports, use the ')+'<a href="/contato.html">'+(ui?ui.contact:"contact page")+'</a>.</p></section></main>',
+        '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span>GlobalTools</div><p>Free online tools for everyone.</p></div><div class="footer-links"><a href="/sobre.html">'+(ui?ui.about:"About")+'</a><a href="/contato.html">'+(ui?ui.contact:"Contact")+'</a><a href="/privacy.html">'+(ui?ui.privacy:"Privacy")+'</a><a href="/terms.html">'+(ui?ui.terms:"Terms")+'</a></div><div class="language-links">'+languageLinks+'</div></footer><script src="/support.js?v=20261013-03"></script></body></html>'
+      ].join('');      ].join('');
       res.writeHead(200, {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-cache, no-store, must-revalidate"});
       return res.end(html);
     }
@@ -516,7 +552,7 @@ const server = http.createServer((req, res) => {
       .replace(/\/language\.js\?v=[^"'\\s]+/g, "/language.js?v=20261013-03")
       .replace(/\/support\.js\?v=[^"'\\s]+/g, "/support.js?v=20261013-03");
     if (!html.includes("G-061NQ52GBQ")) html = html.replace(/<head>/i, `<head><script async src="https://www.googletagmanager.com/gtag/js?id=G-061NQ52GBQ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-061NQ52GBQ");</script>`);
-    if (!html.includes("/language.js")) html = html.replace(/<\/head>/i, `<script defer src="/language.js?v=20261013-03"></script></head>`);
+    if (!/^\/(pt|es|fr)\//i.test(urlPath) && !html.includes("/language.js")) html = html.replace(/<\/head>/i, `<script defer src="/language.js?v=20261013-03"></script></head>`);
     if (!html.includes("/support.js")) html = html.replace(/<\/body>/i, `<script defer src="/support.js?v=20261013-03"></script></body>`);
     res.writeHead(200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate"});
     return res.end(html);
