@@ -41,3 +41,20 @@ jobs:
           curl -fsS http://127.0.0.1:3400/sitemap.xml -o /tmp/sitemap.xml
           grep -F "https://globaltools.example/tools/word-counter.html" /tmp/sitemap.xml
           curl -fsS http://127.0.0.1:3400/products/small-business-finance-dashboard.html | grep -F "https://globaltools.example/products/small-business-finance-dashboard.html"
+      - name: Smoke test production start command
+        env:
+          PORT: 3500
+          CORE_PORT: 3501
+          PUBLIC_SITE_URL: https://globaltools.example
+          GLOBALTOOLS_DATA_DIR: /tmp/globaltools-international-ci-data
+        run: |
+          npm start &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3500/api/me -o /tmp/me.json; then break; fi
+            sleep 1
+          done
+          grep -F '"authenticated":false' /tmp/me.json
+          curl -fsS http://127.0.0.1:3500/robots.txt | grep -F "Sitemap: https://globaltools.example/sitemap.xml"
+          curl -fsS http://127.0.0.1:3500/ | grep -F "GlobalTools — Free Online Tools"
