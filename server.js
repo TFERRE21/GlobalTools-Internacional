@@ -427,7 +427,7 @@ const server = http.createServer((req, res) => {
         : "";
       const htmlLang = ui ? ui.htmlLang : "en-US";
       const pageTitle = ui ? name + " | GlobalTools" : name + " — Free Online Tool | GlobalTools";
-      const groups = {      const groups = {
+      const groups = {
         text:["This tool helps you inspect, clean or transform text for a specific task.","Paste or type a short sample into the input field.","Review the options and confirm the desired output.","Run the tool and copy or download the result.","Line breaks, whitespace, punctuation and the language of the input can affect the result."],
         developer:["This developer utility helps with a common data or code task, such as formatting, validation, encoding or transformation.","Paste a small sample of code or data into the input field.","Run the tool and compare the result with the original sample.","Review the output before using it in a live application.","Never paste private keys, production credentials, passwords or access tokens into a tool unless you fully understand the processing path."],
         pdf:["This PDF utility is designed for a particular document workflow, such as converting, organizing or inspecting PDF files.","Choose compatible PDF files and review any available instructions.","Start with a small, non-sensitive sample to check the output.","Open the generated file and confirm that the result is complete and readable.","Scanned pages, complex layouts, embedded fonts, images and encryption can affect what a browser-based conversion can preserve."],
