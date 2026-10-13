@@ -465,8 +465,40 @@ const server = http.createServer((req, res) => {
           description: "Use this free online word counter to count words, characters, sentences and paragraphs. Counts may vary for emoji, hyphenated words and line breaks."
         }
       };
+      const localizedSeo = {
+        pt: {
+          "word-to-pdf": {title:"Converter Word em PDF Grátis | GlobalTools",description:"Converta Word em PDF grátis online. A ferramenta extrai texto do DOCX e cria um PDF simples; imagens e formatação avançada podem mudar."},
+          "pdf-to-word": {title:"PDF para Word Grátis Online | GlobalTools",description:"Converta PDF para Word grátis online e extraia texto legível para DOCX editável. Tabelas, imagens e PDFs digitalizados podem exigir revisão."},
+          "compress-pdf": {title:"Comprimir PDF Grátis Online | GlobalTools",description:"Comprima PDF grátis online com uma otimização simples no navegador. Compare o tamanho do arquivo; alguns PDFs podem não ficar menores."},
+          "merge-pdf": {title:"Juntar PDFs Grátis Online | GlobalTools",description:"Junte arquivos PDF grátis online em um único documento, na ordem selecionada. Arquivos protegidos ou danificados podem falhar."},
+          "jpg-to-pdf": {title:"JPG para PDF Grátis Online | GlobalTools",description:"Converta JPG para PDF grátis online para compartilhar ou imprimir. Confira o tamanho da página e a qualidade da imagem."},
+          "pdf-to-jpg": {title:"PDF para JPG Grátis Online | GlobalTools",description:"Converta páginas PDF para JPG online gratuitamente. Verifique a resolução e a nitidez do texto; documentos grandes podem usar mais memória."},
+          "word-counter": {title:"Contador de Palavras Online | GlobalTools",description:"Conte palavras online grátis, além de caracteres, frases e parágrafos. A contagem pode variar para emojis, palavras com hífen e quebras de linha."},
+          "image-compressor": {title:"Compressor de Imagens Grátis | GlobalTools",description:"Comprima imagens online grátis e compare tamanho e qualidade. Os resultados dependem do formato, das configurações e do conteúdo da imagem."}
+        },
+        es: {
+          "word-to-pdf": {title:"Word a PDF Gratis Online | GlobalTools",description:"Convierte Word a PDF gratis online. La herramienta extrae texto de DOCX y crea un PDF sencillo; las imágenes y el formato avanzado pueden cambiar."},
+          "pdf-to-word": {title:"PDF a Word Gratis Online | GlobalTools",description:"Convierte PDF a Word gratis online y extrae texto legible a un DOCX editable. Las tablas, imágenes y los PDF escaneados pueden requerir revisión."},
+          "compress-pdf": {title:"Comprimir PDF Gratis Online | GlobalTools",description:"Comprime PDF gratis online con una optimización sencilla en el navegador. Compara el tamaño del archivo; algunos PDF pueden no reducirse."},
+          "merge-pdf": {title:"Unir PDF Gratis Online | GlobalTools",description:"Une archivos PDF gratis online en un solo documento y en el orden seleccionado. Los archivos protegidos o dañados pueden fallar."},
+          "jpg-to-pdf": {title:"JPG a PDF Gratis Online | GlobalTools",description:"Convierte JPG a PDF gratis online para compartir o imprimir. Comprueba el tamaño de página y la calidad de la imagen."},
+          "pdf-to-jpg": {title:"PDF a JPG Gratis Online | GlobalTools",description:"Convierte páginas PDF en imágenes JPG gratis online. Revisa la resolución y la nitidez del texto; los documentos grandes pueden usar más memoria."},
+          "word-counter": {title:"Contador de Palabras Online | GlobalTools",description:"Cuenta palabras online gratis, además de caracteres, frases y párrafos. El recuento puede variar con emojis, palabras con guion y saltos de línea."},
+          "image-compressor": {title:"Compresor de Imágenes Gratis | GlobalTools",description:"Comprime imágenes online gratis y compara el tamaño y la calidad. El resultado depende del formato, los ajustes y el contenido de la imagen."}
+        },
+        fr: {
+          "word-to-pdf": {title:"Word en PDF Gratuit en Ligne | GlobalTools",description:"Convertissez Word en PDF gratuitement en ligne. L’outil extrait le texte DOCX et crée un PDF simple ; les images et la mise en forme avancée peuvent changer."},
+          "pdf-to-word": {title:"PDF en Word Gratuit en Ligne | GlobalTools",description:"Convertissez un PDF en Word gratuitement et extrayez le texte lisible dans un DOCX modifiable. Les tableaux, images et PDF numérisés peuvent nécessiter une vérification."},
+          "compress-pdf": {title:"Compresser PDF Gratuit en Ligne | GlobalTools",description:"Compressez un PDF gratuitement en ligne avec une optimisation simple dans le navigateur. Comparez la taille ; certains PDF peuvent ne pas diminuer."},
+          "merge-pdf": {title:"Fusionner des PDF Gratuitement | GlobalTools",description:"Fusionnez plusieurs fichiers PDF en un seul document dans l’ordre choisi. Les fichiers protégés ou endommagés peuvent échouer."},
+          "jpg-to-pdf": {title:"JPG en PDF Gratuit en Ligne | GlobalTools",description:"Convertissez une image JPG en PDF gratuitement pour la partager ou l’imprimer. Vérifiez les dimensions de page et la qualité de l’image."},
+          "pdf-to-jpg": {title:"PDF en JPG Gratuit en Ligne | GlobalTools",description:"Convertissez les pages d’un PDF en images JPG gratuites en ligne. Vérifiez la résolution et la netteté du texte ; les gros documents utilisent plus de mémoire."},
+          "word-counter": {title:"Compteur de Mots en Ligne | GlobalTools",description:"Comptez gratuitement les mots, caractères, phrases et paragraphes en ligne. Le résultat peut varier pour les emojis, mots composés et retours à la ligne."},
+          "image-compressor": {title:"Compresseur d’Images Gratuit | GlobalTools",description:"Compressez des images gratuitement en ligne et comparez taille et qualité. Le résultat dépend du format, des réglages et du contenu de l’image."}
+        }
+      };
       const pageTitle = ui
-        ? name + (locale === "pt" ? " grátis online | GlobalTools" : locale === "es" ? " gratis online | GlobalTools" : " en ligne | GlobalTools")
+        ? (localizedSeo[locale]?.[slug]?.title || name + (locale === "pt" ? " grátis online | GlobalTools" : locale === "es" ? " gratis online | GlobalTools" : " en ligne | GlobalTools"))
         : (englishSeo[slug]?.title || name + " — Free Online Tool | GlobalTools");
       const groups = {
         text:["This tool helps you inspect, clean or transform text for a specific task.","Paste or type a short sample into the input field.","Review the options and confirm the desired output.","Run the tool and copy or download the result.","Line breaks, whitespace, punctuation and the language of the input can affect the result."],
@@ -526,7 +558,9 @@ const server = http.createServer((req, res) => {
       const faqHtml=faq.map(x=>'<div><h3>'+safe(x[0])+'</h3><p>'+safe(x[1])+'</p></div>').join('');
       const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","inLanguage":locale==="pt"?"pt-BR":locale,"mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
       const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":pageUrl,"inLanguage":locale==="pt"?"pt-BR":locale,"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/","logo":{"@type":"ImageObject","url":siteUrl(req)+"/icon.svg","width":512,"height":512}},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
-      const metaDescription = ui ? desc : (englishSeo[slug]?.description || desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.");
+      const metaDescription = ui
+        ? (localizedSeo[locale]?.[slug]?.description || desc)
+        : (englishSeo[slug]?.description || desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.");
       const languageLinks = [["en","English","/tools/"+slug+".html"],["pt-BR","Português","/pt/tools/"+slug+".html"],["es","Español","/es/tools/"+slug+".html"],["fr","Français","/fr/tools/"+slug+".html"]]
         .filter(([lang]) => lang === "en" || !!LOCALIZED_TOOL_COPY[lang==="pt-BR"?"pt":lang]?.[slug])
         .map(([lang,label,href]) => '<a href="'+href+'" hreflang="'+lang+'">'+label+'</a>').join(' · ');
