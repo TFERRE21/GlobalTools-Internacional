@@ -1,19 +1,104 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Contact — GlobalTools</title><meta name="description" content="Contact GlobalTools to report errors, suggest improvements, report technical problems or ask questions about online tools.">
-<meta name="robots" content="index,follow"><link rel="canonical" href="https://globaltools-international.example/contato.html"><link rel="stylesheet" href="/styles.css?v=20261007-04">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact GlobalTools — Support and Feedback</title>
+<meta name="description" content="Contact GlobalTools to report a tool issue, ask about a digital product or send a suggestion.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://globaltoolsnow.com/contato.html">
+<link rel="stylesheet" href="/styles.css?v=20261013-03">
+<style>
+.contact-form{max-width:760px;margin:28px auto;background:#fff;border:1px solid #e5e6e8;border-radius:10px;padding:28px;box-shadow:0 4px 18px rgba(30,32,36,.05)}
+.contact-form label{display:block;font-weight:700;margin:14px 0 6px}
+.contact-form input,.contact-form select,.contact-form textarea{width:100%;padding:12px;border:1px solid #d2d4d8;border-radius:6px;font:inherit;background:#fff}
+.contact-form textarea{min-height:150px}
+.contact-form button{margin-top:16px}
+.contact-status{margin-top:14px;min-height:24px;font-weight:600}
+.contact-note{color:#6f737b;font-size:13px}
+.hp-field{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+@media(max-width:600px){.contact-form{padding:18px}}
+</style>
 </head>
-<body><header class="site-header global-header"><a class="brand" href="/"><span class="brand-mark">G</span><span>GlobalTools</span></a>
-<nav class="main-nav"><a href="/">Tools</a><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav></header>
-<main class="tool-page"><div class="breadcrumbs"><a href="/">Home</a> / Contact</div>
-<section class="tool-hero"><div class="tool-kicker">GLOBALTOOLS • SUPPORT</div><h1>Contact</h1><p class="intro">Use this channel to send suggestions, report problems or communicate errors in our tools.</p></section>
-<div class="info"><h2>Email</h2><p>To contact us, email <a href="mailto:contato@globaltools-international.example">contato@globaltools-international.example</a>.</p>
-<h2>What should I include in an error report?</h2><p>Include the tool name, browser used, a description of the problem and, when possible, a generic example that allows us to reproduce the situation.</p>
-<h2>Privacy and security</h2><p>Do not send passwords, personal documents, banking information, authentication tokens or other confidential information by email. Prefer fictional examples or non-identifying data when reporting a problem.</p>
-<h2>Suggestions</h2><p>We also welcome suggestions for new tools, usability improvements, translations and content corrections.</p>
-<h2>Other information</h2><p>For information about data, cookies, advertising and third-party services, see our <a href="/privacy.html">Privacy Policy</a>. For the rules governing use of the platform, see the <a href="/terms.html">Terms of Use</a>.</p>
-</div></main>
+<body>
+<header class="site-header global-header">
+<a class="brand" href="/"><span class="brand-mark">G</span><span>GlobalTools</span></a>
+<nav class="main-nav"><a href="/">Tools</a><a href="/store.html">Store</a><a href="/sobre.html">About</a><a href="/suporte.html">Support</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav>
+</header>
+<main class="tool-page">
+<div class="breadcrumbs"><a href="/">Home</a> / Contact</div>
+<section class="tool-hero">
+<div class="tool-kicker">GLOBALTOOLS • SUPPORT</div>
+<h1>Contact GlobalTools</h1>
+<p class="intro">Report a problem with a tool, ask about a digital product or send a suggestion. Please include enough detail for us to understand the issue.</p>
+</section>
+<form id="contactForm" class="contact-form">
+<h2>Send a message</h2>
+<p class="contact-note">Required fields are marked below. Do not include passwords, payment-card details, authentication tokens or confidential documents.</p>
+<div class="hp-field" aria-hidden="true"><label>Leave this field blank<input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
+<label for="contactName">Name *</label>
+<input id="contactName" name="name" type="text" autocomplete="name" maxlength="120" required>
+<label for="contactEmail">Email *</label>
+<input id="contactEmail" name="email" type="email" autocomplete="email" maxlength="180" required>
+<label for="contactTopic">Topic</label>
+<select id="contactTopic" name="topic">
+<option value="Tool problem">Tool problem</option>
+<option value="Product or download">Product or download</option>
+<option value="Payment or billing">Payment or billing</option>
+<option value="Suggestion or feedback">Suggestion or feedback</option>
+<option value="Privacy request">Privacy request</option>
+<option value="Other">Other</option>
+</select>
+<label for="contactMessage">Message *</label>
+<textarea id="contactMessage" name="message" maxlength="2800" minlength="10" required placeholder="Describe what happened, which tool or product you used, and what you expected."></textarea>
+<button id="contactSubmit" class="btn" type="submit">Send message</button>
+<p id="contactStatus" class="contact-status" role="status" aria-live="polite"></p>
+<p class="contact-note">After submission, keep the reference number shown on this page. Messages are stored for follow-up; this form does not send an automatic email receipt.</p>
+</form>
+<section class="info">
+<h2>Reporting a technical issue</h2>
+<p>Include the tool name, the browser you used, the file type if relevant and the steps that reproduce the problem. Use sample or non-sensitive information where possible.</p>
+<h2>Purchases and downloads</h2>
+<p>For a purchase or download issue, provide the product name and the email used at checkout. Never send card numbers, passwords or banking credentials.</p>
+<h2>Privacy requests</h2>
+<p>Use the form above to ask a question about personal information, cookies, analytics or advertising. See our <a href="/privacy.html">Privacy Policy</a> for more information.</p>
+</section>
+</main>
 <footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span><span>GlobalTools</span></div><p>Free online tools and practical digital products.</p></div>
-<div class="footer-links"><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div></footer>
+<div class="footer-links"><a href="/store.html">Store</a><a href="/sobre.html">About</a><a href="/suporte.html">Support</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/refund.html">Refunds</a></div></footer>
+<script>
+(function(){
+  const form=document.getElementById("contactForm");
+  const status=document.getElementById("contactStatus");
+  const button=document.getElementById("contactSubmit");
+  form.addEventListener("submit",async function(event){
+    event.preventDefault();
+    const values=Object.fromEntries(new FormData(form).entries());
+    const topic=String(values.topic||"Other").trim();
+    values.message="Topic: "+topic+"\n\n"+String(values.message||"").trim();
+    values.priority="normal";
+    values.page=location.pathname;
+    delete values.topic;
+    status.textContent="Sending your message…";
+    status.style.color="";
+    button.disabled=true;
+    try{
+      const response=await fetch("/api/support/ticket",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(values)
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.ok)throw new Error(result.error||"The message could not be saved. Please try again.");
+      status.textContent="Your message was saved. Reference number: "+result.ticketId+". Please keep this number.";
+      status.style.color="#166534";
+      form.reset();
+    }catch(error){
+      status.textContent=error.message||"The message could not be sent. Please try again later.";
+      status.style.color="#b91c1c";
+    }finally{
+      button.disabled=false;
+    }
+  });
+})();
+</script>
 </body></html>
