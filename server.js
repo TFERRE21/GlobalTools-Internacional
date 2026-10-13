@@ -429,7 +429,45 @@ const server = http.createServer((req, res) => {
           .map(([lang,route]) => '<link rel="alternate" hreflang="'+lang+'" href="'+siteUrl(req)+route+'">').join("")
         : "";
       const htmlLang = ui ? ui.htmlLang : "en-US";
-      const pageTitle = ui ? name + (locale === "pt" ? " grátis online | GlobalTools" : locale === "es" ? " gratis online | GlobalTools" : " en ligne | GlobalTools") : name + " — Free Online Tool | GlobalTools";
+      // Search phrases were researched through Ubersuggest's free Google autocomplete suggestions.
+      // Keep titles and descriptions natural and accurate to the tool's current capabilities.
+      const englishSeo = {
+        "word-to-pdf": {
+          title: "Word to PDF Converter Free Online | GlobalTools",
+          description: "Use this free online Word to PDF converter to turn DOCX text into a simple PDF. Check the output; images, tables and advanced formatting may not be preserved."
+        },
+        "pdf-to-word": {
+          title: "PDF to Word Converter Free Online | GlobalTools",
+          description: "Use this free PDF to Word converter to extract readable text into an editable DOCX. Complex layouts, images, tables and scanned files may need review."
+        },
+        "compress-pdf": {
+          title: "Compress PDF Online Free | GlobalTools",
+          description: "Try this free online PDF compressor to reduce file size. Compare the output with the original; this lightweight tool may not shrink every PDF."
+        },
+        "merge-pdf": {
+          title: "Merge PDF Files Free Online | GlobalTools",
+          description: "Merge PDF files online for free into one document in the selected order. Check the merged file; protected or damaged PDFs may fail to process."
+        },
+        "image-compressor": {
+          title: "Image Compressor Free Online | GlobalTools",
+          description: "Compress images online for free and compare file size and quality. Results depend on the image format and settings; keep the original file."
+        },
+        "jpg-to-pdf": {
+          title: "JPG to PDF Converter Free Online | GlobalTools",
+          description: "Use this free online JPG to PDF converter to place an image in a PDF for sharing or printing. Check the page size and image quality."
+        },
+        "pdf-to-jpg": {
+          title: "PDF to JPG Converter Free Online | GlobalTools",
+          description: "Convert PDF pages to JPG images online for free. Review the image resolution and text sharpness; large documents may use more browser memory."
+        },
+        "word-counter": {
+          title: "Word Counter Online Free | GlobalTools",
+          description: "Use this free online word counter to count words, characters, sentences and paragraphs. Counts may vary for emoji, hyphenated words and line breaks."
+        }
+      };
+      const pageTitle = ui
+        ? name + (locale === "pt" ? " grátis online | GlobalTools" : locale === "es" ? " gratis online | GlobalTools" : " en ligne | GlobalTools")
+        : (englishSeo[slug]?.title || name + " — Free Online Tool | GlobalTools");
       const groups = {
         text:["This tool helps you inspect, clean or transform text for a specific task.","Paste or type a short sample into the input field.","Review the options and confirm the desired output.","Run the tool and copy or download the result.","Line breaks, whitespace, punctuation and the language of the input can affect the result."],
         developer:["This developer utility helps with a common data or code task, such as formatting, validation, encoding or transformation.","Paste a small sample of code or data into the input field.","Run the tool and compare the result with the original sample.","Review the output before using it in a live application.","Never paste private keys, production credentials, passwords or access tokens into a tool unless you fully understand the processing path."],
@@ -488,7 +526,7 @@ const server = http.createServer((req, res) => {
       const faqHtml=faq.map(x=>'<div><h3>'+safe(x[0])+'</h3><p>'+safe(x[1])+'</p></div>').join('');
       const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","inLanguage":locale==="pt"?"pt-BR":locale,"mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
       const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":pageUrl,"inLanguage":locale==="pt"?"pt-BR":locale,"isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/","logo":{"@type":"ImageObject","url":siteUrl(req)+"/icon.svg","width":512,"height":512}},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
-      const metaDescription = ui ? desc : desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.";
+      const metaDescription = ui ? desc : (englishSeo[slug]?.description || desc + " Learn how to use the tool, review examples, and understand its limitations with GlobalTools.");
       const languageLinks = [["en","English","/tools/"+slug+".html"],["pt-BR","Português","/pt/tools/"+slug+".html"],["es","Español","/es/tools/"+slug+".html"],["fr","Français","/fr/tools/"+slug+".html"]]
         .filter(([lang]) => lang === "en" || !!LOCALIZED_TOOL_COPY[lang==="pt-BR"?"pt":lang]?.[slug])
         .map(([lang,label,href]) => '<a href="'+href+'" hreflang="'+lang+'">'+label+'</a>').join(' · ');
