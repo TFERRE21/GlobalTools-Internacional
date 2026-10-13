@@ -385,7 +385,7 @@ const server = http.createServer((req, res) => {
         '<meta property="og:type" content="website"><meta property="og:title" content="'+safe(name)+' — GlobalTools"><meta property="og:description" content="'+safe(desc)+'"><meta property="og:url" content="'+pageUrl+'"><meta property="og:site_name" content="GlobalTools"><meta name="twitter:card" content="summary">',
         '<script type="application/ld+json">'+appSchema+'</script><script type="application/ld+json">'+faqSchema+'</script>',
         '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>',
-        '<script async src="https://www.googletagmanager.com/gtag/js?id=G-DM7CKZRD30"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-DM7CKZRD30");</script>',
+        '<script async src="https://www.googletagmanager.com/gtag/js?id=G-061NQ52GBQ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-061NQ52GBQ");</script>',
         '<link rel="stylesheet" href="/styles.css?v=20261013-02"><script defer src="/app.js?v=20261013-02"></script><!-- Google Ads tag --><script async src="https://www.googletagmanager.com/gtag/js?id=AW-17240722145"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","AW-17240722145");</script></head>',
         '<body><header class="site-header"><a class="brand" href="/"><span class="brand-mark">G</span>GlobalTools</a><nav class="main-nav"><a href="/">Tools</a><a href="/#categories">Categories</a><a href="/sobre.html">About</a><a href="/contato.html">Contact</a><a href="/privacy.html">Privacy</a><label class="language-switcher"><span>🌐</span><select id="languageSelect"><option value="en" selected>English</option><option value="pt">Português</option><option value="es">Español</option><option value="fr">Français</option></select></label></nav></header>',
         '<main class="tool-page"><div class="breadcrumbs"><a href="/">Home</a> / '+safe(name)+'</div><section class="tool-hero"><div class="tool-kicker">GLOBALTOOLS • ONLINE TOOL</div><h1>'+safe(name)+'</h1><p class="intro">'+safe(desc)+'</p></section>',
@@ -419,12 +419,13 @@ const server = http.createServer((req, res) => {
   const ext = path.extname(finalPath).toLowerCase();
   if (ext === ".html") {
     let html = fs.readFileSync(finalPath, "utf8");
+    html = html.replaceAll("G-DM7CKZRD30", "G-061NQ52GBQ");
     html = html.replaceAll("https://globaltools-international.example", siteUrl(req));
     html = html.replace(/\/styles\.css\?v=[^"'\\s]+/g, "/styles.css?v=20261013-02")
       .replace(/\/app\.js\?v=[^"'\\s]+/g, "/app.js?v=20261013-02")
       .replace(/\/language\.js\?v=[^"'\\s]+/g, "/language.js?v=20261013-02")
       .replace(/\/support\.js\?v=[^"'\\s]+/g, "/support.js?v=20261013-02");
-    if (!html.includes("G-DM7CKZRD30")) html = html.replace(/<head>/i, `<head><script async src="https://www.googletagmanager.com/gtag/js?id=G-DM7CKZRD30"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-DM7CKZRD30");</script>`);
+    if (!html.includes("G-061NQ52GBQ")) html = html.replace(/<head>/i, `<head><script async src="https://www.googletagmanager.com/gtag/js?id=G-061NQ52GBQ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-061NQ52GBQ");</script>`);
     if (!html.includes("/language.js")) html = html.replace(/<\/head>/i, `<script defer src="/language.js?v=20261013-02"></script></head>`);
     if (!html.includes("/support.js")) html = html.replace(/<\/body>/i, `<script defer src="/support.js?v=20261013-02"></script></body>`);
     res.writeHead(200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate"});
