@@ -496,7 +496,7 @@ const server = http.createServer((req, res) => {
       const toolsAnchor = ui ? ui.toolsAnchor : "/#categories";
       const contactHint = locale === "pt" ? "Para perguntas ou problemas, use o " : locale === "es" ? "Para preguntas o problemas, utiliza la página de " : locale === "fr" ? "Pour toute question ou tout problème, utilisez la page de " : "For questions or bug reports, use the ";
       const html=[
-        '<!doctype html><html lang="'+htmlLang+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
+        '<!doctype html><html lang="'+htmlLang+'"><head><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="manifest" href="/site.webmanifest"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
         '<title>'+safe(pageTitle)+'</title>',
         '<meta name="description" content="'+safe(metaDescription)+'">',
         '<meta name="robots" content="index,follow"><link rel="canonical" href="'+pageUrl+'">'+alternateLinks,
@@ -539,7 +539,7 @@ const server = http.createServer((req, res) => {
     let html = fs.readFileSync(finalPath, "utf8");
     html = html.replaceAll("G-DM7CKZRD30", "G-061NQ52GBQ");
     html = html.replaceAll("https://globaltools-international.example", siteUrl(req));
-    if (!html.includes('href="/icon.svg"')) html = html.replace(/<head>/i, '<head><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="manifest" href="/site.webmanifest">');
+    if (!/<link\b[^>]*rel=["'](?:shortcut\s+)?icon["']/i.test(html)) html = html.replace(/<head>/i, '<head><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="manifest" href="/site.webmanifest">');
     const noAdsPage = urlPath === "/login.html" ||
       urlPath === "/account.html" ||
       urlPath === "/account-success.html" ||
