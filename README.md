@@ -15,7 +15,7 @@ Configure `.env.example` variables in your hosting provider's secret/environment
 Separate live USD Products/Prices have been created for the international catalog, independent of the Oolivo BRL Prices. Checkout uses hosted Stripe Checkout in English.
 
 ## Before production
-1. Set the real `PUBLIC_SITE_URL` and update product-schema URLs, `robots.txt`, and `sitemap.xml`.
-2. Configure Stripe secret and webhook signing keys and test the webhook.
-3. Configure a verified sender domain if using transactional email.
+1. Set `PUBLIC_SITE_URL` to the real HTTPS international domain. Canonical links, `robots.txt`, and `sitemap.xml` are generated from this URL at runtime.
+2. Set the live Stripe secret key and webhook signing secret from the same Stripe account that owns the USD Prices. Configure the webhook endpoint as `https://YOUR-DOMAIN/api/stripe-webhook`; verify `checkout.session.completed` and subscription events.
+3. Configure a verified sender domain and `RESEND_FROM_EMAIL` if using transactional email.
 4. Confirm Google Analytics/AdSense settings and register the new domain in Search Console.
