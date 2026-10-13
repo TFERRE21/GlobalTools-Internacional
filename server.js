@@ -413,11 +413,11 @@ const server = http.createServer((req, res) => {
       const purpose=sp?sp[0]:g[0], example=sp?sp[1]:"Comece com uma entrada curta e não sensível para conferir o comportamento antes de processar conteúdo importante.", notes=sp?sp[2]:g[4];
       const steps = [g[1],g[2],g[3]].map((x,i)=>'<li>'+safe(x)+'</li>').join('');
       const faq=[
-        ["O que é "+name+"?",desc+" A ferramenta está disponível online para realizar essa tarefa sem instalar um programa específico."],
-        ["Como usar "+name+"?","Informe os dados ou selecione o arquivo solicitado, execute a ferramenta e confira o resultado."],
-        ["Do I need to create an account?","No. The core GlobalTools tools are designed to work without an account."],
-        ["Is my data uploaded to the server?","When local processing is supported, the task runs in your browser. Some tools load external libraries or send the input needed for a third-party service; review the tool-specific notes before submitting sensitive data."]
-      ];
+         ["What is "+name+"?",desc+" This online tool helps you complete the task without installing separate software."],
+         ["How do I use "+name+"?","Enter the requested data or select a supported file, run the tool, and check the result before using it."],
+         ["Do I need to create an account?","No. The core GlobalTools tools are designed to work without an account."],
+         ["Is my data uploaded to the server?","When local processing is supported, the task runs in your browser. Some tools load external libraries or send the input needed for an external service; review the tool-specific notes before submitting sensitive data."]
+       ];
       const faqHtml=faq.map(x=>'<div><h3>'+safe(x[0])+'</h3><p>'+safe(x[1])+'</p></div>').join('');
       const faqSchema=JSON.stringify({"@context":"https://schema.org","@type":"FAQPage","mainEntity":faq.map(x=>({"@type":"Question","name":x[0],"acceptedAnswer":{"@type":"Answer","text":x[1]}}))}).replace(/</g,'\\u003c');
       const appSchema=JSON.stringify({"@context":"https://schema.org","@type":"WebApplication","name":name+" — GlobalTools","applicationCategory":"UtilitiesApplication","operatingSystem":"Web Browser","description":desc,"url":siteUrl(req)+"/tools/"+slug+".html","isAccessibleForFree":true,"publisher":{"@type":"Organization","name":"GlobalTools","url":siteUrl(req)+"/"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}).replace(/</g,'\\u003c');
