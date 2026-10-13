@@ -28,7 +28,7 @@ jobs:
       - name: Smoke test domain-aware SEO endpoints
         env:
           PORT: 3400
-          PUBLIC_SITE_URL: https://globaltools.example
+          PUBLIC_SITE_URL: https://globaltoolsnow.com
         run: |
           node server.js &
           server_pid=$!
@@ -37,10 +37,10 @@ jobs:
             if curl -fsS http://127.0.0.1:3400/robots.txt -o /tmp/robots.txt; then break; fi
             sleep 1
           done
-          grep -F "Sitemap: https://globaltools.example/sitemap.xml" /tmp/robots.txt
+          grep -F "Sitemap: https://globaltoolsnow.com/sitemap.xml" /tmp/robots.txt
           curl -fsS http://127.0.0.1:3400/sitemap.xml -o /tmp/sitemap.xml
-          grep -F "https://globaltools.example/tools/word-counter.html" /tmp/sitemap.xml
-          curl -fsS http://127.0.0.1:3400/products/small-business-finance-dashboard.html | grep -F "https://globaltools.example/products/small-business-finance-dashboard.html"
+          grep -F "https://globaltoolsnow.com/tools/word-counter.html" /tmp/sitemap.xml
+          curl -fsS http://127.0.0.1:3400/products/small-business-finance-dashboard.html | grep -F "https://globaltoolsnow.com/products/small-business-finance-dashboard.html"
       - name: Smoke test public-domain fallback without environment variable
         env:
           PORT: 3402
@@ -63,7 +63,7 @@ jobs:
         env:
           PORT: 3500
           CORE_PORT: 3501
-          PUBLIC_SITE_URL: https://globaltools.example
+          PUBLIC_SITE_URL: https://globaltoolsnow.com
           GLOBALTOOLS_DATA_DIR: /tmp/globaltools-international-ci-data
         run: |
           npm start &
@@ -74,10 +74,29 @@ jobs:
             sleep 1
           done
           grep -F '"authenticated":false' /tmp/me.json
-          curl -fsS http://127.0.0.1:3500/robots.txt | grep -F "Sitemap: https://globaltools.example/sitemap.xml"
+          curl -fsS http://127.0.0.1:3500/robots.txt | grep -F "Sitemap: https://globaltoolsnow.com/sitemap.xml"
           curl -fsS http://127.0.0.1:3500/ads.txt -o /tmp/ads.txt
           grep -Fx "google.com, pub-6472882150880001, DIRECT, f08c47fec0942fa0" /tmp/ads.txt
           curl -fsS http://127.0.0.1:3500/ | grep -F "GlobalTools — Free Online Tools"
           curl -fsS http://127.0.0.1:3500/store.html -o /tmp/store.html
           grep -F 'adsbygoogle.js?client=ca-pub-6472882150880001' /tmp/store.html
           test "$(grep -o 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/store.html | wc -l)" -eq 1
+          curl -fsS http://127.0.0.1:3500/contato.html -o /tmp/contact.html
+          grep -F 'id="contactForm"' /tmp/contact.html
+          if grep -E 'globaltools-international\.example|contato@.*\.example|OOLIVO' /tmp/contact.html /tmp/privacy.html /tmp/refund.html; then
+            echo "Placeholder contact details or legacy brand found on public policy pages"
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:3500/privacy.html -o /tmp/privacy.html
+          grep -F 'Google AdSense' /tmp/privacy.html
+          grep -F 'globaltoolsnow.com' /tmp/privacy.html
+          curl -fsS http://127.0.0.1:3500/tools/compress-pdf.html -o /tmp/compress-pdf.html
+          grep -F 'This tool re-saves a PDF using a browser-based PDF library.' /tmp/compress-pdf.html
+          curl -fsS http://127.0.0.1:3500/account.html -o /tmp/account.html
+          if grep -F 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/account.html; then
+            echo "AdSense must not load on account pages"
+            exit 1
+          fi
+          ticket_response=$(curl -fsS -X POST http://127.0.0.1:3500/api/support/ticket -H 'Content-Type: application/json' -d '{"name":"CI Tester","email":"ci@example.com","message":"Automated support ticket storage test","page":"/contato.html"}')
+          echo "$ticket_response" | grep -F '"ok":true'
+          test -s /tmp/globaltools-international-ci-data/support-tickets.json
