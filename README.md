@@ -19,3 +19,16 @@ Separate live USD Products/Prices have been created for the international catalo
 2. Set the live Stripe secret key and webhook signing secret from the same Stripe account that owns the USD Prices. Configure the webhook endpoint as `https://YOUR-DOMAIN/api/stripe-webhook`; verify `checkout.session.completed` and subscription events.
 3. Configure a verified sender domain and `RESEND_FROM_EMAIL` if using transactional email.
 4. Confirm Google Analytics/AdSense settings and register the new domain in Search Console.
+
+## Business identification
+
+The public business identification currently used on the site is:
+
+- Business name: 69.623.245 THIAGO DE JESUS FERREIRA
+- Brazilian CNPJ: 69.623.245/0001-71
+
+The configured default public URL in the application is `https://globaltoolsnow.com`. Confirm the live production domain and keep `PUBLIC_SITE_URL` aligned with it before deploying. Canonical URLs, robots.txt, sitemap.xml, and Stripe checkout return URLs depend on the public URL configuration.
+
+## Data and secrets
+
+Do not commit runtime account data, session files, or real environment files. Keep account storage on the configured persistent volume and store Stripe/email credentials only in the hosting provider's secret manager.
