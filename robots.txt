@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
-# Add the absolute Sitemap URL after connecting the production domain.
+Disallow: /login.html
+Disallow: /account.html
+Disallow: /account-success.html
+Disallow: /products/*-success.html
+Sitemap: https://globaltoolsnow.com/sitemap.xml
