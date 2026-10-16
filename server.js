@@ -576,7 +576,7 @@ const server = http.createServer((req, res) => {
         '<script type="application/ld+json">'+appSchema+'</script><script type="application/ld+json">'+faqSchema+'</script>',
         '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>',
         '<script async src="https://www.googletagmanager.com/gtag/js?id=G-061NQ52GBQ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-061NQ52GBQ");gtag("config","AW-17240722145");</script>',
-        '<link rel="stylesheet" href="/styles.css?v=20261013-03"><script>try{localStorage.setItem("globaltools-international-language-v1",'+JSON.stringify(locale)+')}catch(e){}</script><script defer src="/app.js?v=20261013-03"></script></head>',
+        '<link rel="stylesheet" href="/styles.css?v=20261016-01"><script>try{localStorage.setItem("globaltools-international-language-v1",'+JSON.stringify(locale)+')}catch(e){}</script><script defer src="/app.js?v=20261016-01"></script></head>',
         '<body><select id="languageSelect" hidden aria-hidden="true"><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option><option value="fr">Français</option></select><header class="site-header"><a class="brand" href="'+homePath+'"><span class="brand-mark">G</span>GlobalTools</a><nav class="main-nav"><a href="'+homePath+'">'+(ui?ui.home:"Tools")+'</a><a href="'+toolsAnchor+'">'+(ui?ui.categories:"Categories")+'</a><a href="/sobre.html">'+(ui?ui.about:"About")+'</a><a href="/contato.html">'+(ui?ui.contact:"Contact")+'</a><a href="/privacy.html">'+(ui?ui.privacy:"Privacy")+'</a></nav><div class="language-links">'+languageLinks+'</div></header>',
         '<main class="tool-page"><div class="breadcrumbs"><a href="'+homePath+'">'+(ui?ui.home:"Home")+'</a> / '+safe(name)+'</div><section class="tool-hero"><div class="tool-kicker">'+(ui?ui.kicker:"GLOBALTOOLS • ONLINE TOOL")+'</div><h1>'+safe(name)+'</h1><p class="intro">'+safe(desc)+'</p></section>',
         '<div class="tool-workspace"><div id="tool" class="tool-box"><div id="dropZone" class="upload-visual file-upload-visual"><div class="upload-icon">↥</div><h2>'+(ui?ui.selectFiles:"Select files")+'</h2><p>'+(ui?ui.dropHint:"or drag and drop files here")+'</p></div><textarea id="input" aria-label="'+safe(name)+'" placeholder="'+(ui?ui.enterData:"Enter or paste your data...")+'"></textarea><button id="action" class="btn primary-action">'+(ui?ui.run:"Run tool")+'</button><div id="result" class="result">'+(ui?ui.result:"Your result will appear here.")+'</div></div>',
@@ -584,7 +584,7 @@ const server = http.createServer((req, res) => {
         '<section class="info"><h2>'+(ui?ui.aboutTool:"About")+' '+safe(name)+'</h2><p>'+safe(purpose)+'</p><h2>'+(ui?ui.howTo:"How to use")+'</h2><ol>'+steps+'</ol><h2>'+(ui?ui.example:"Practical example")+'</h2><p>'+safe(example)+'</p><h2>'+(ui?ui.limitations:"Limitations and precautions")+'</h2><p>'+safe(notes)+'</p><h2>'+(ui?ui.faq:"Frequently asked questions")+'</h2><div class="faq">'+faqHtml+'</div>',
         related.length?'<h2>'+(ui?ui.related:"Related tools")+'</h2><div class="related-tools">'+relatedHtml+'</div>':'',
         '<h2>'+(ui?ui.processing:"Privacy and processing")+'</h2><p>'+(ui?ui.processingIntro:"GlobalTools prioritizes in-browser processing whenever technically possible.")+' '+(ui?ui.privacyText:'For details about cookies, advertising, analytics and external services, read our')+' <a href="/privacy.html">'+(ui?ui.privacy:"Privacy Policy")+'</a>. '+contactHint+'<a href="/contato.html">'+(ui?ui.contact:"contact page")+'</a>.</p></section></main>',
-        '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span>GlobalTools</div><p>'+(ui?ui.footerText:"Free online tools for everyone.")+'</p></div><div class="footer-links"><a href="/sobre.html">'+(ui?ui.about:"About")+'</a><a href="/contato.html">'+(ui?ui.contact:"Contact")+'</a><a href="/privacy.html">'+(ui?ui.privacy:"Privacy")+'</a><a href="/terms.html">'+(ui?ui.terms:"Terms")+'</a></div><div class="language-links">'+languageLinks+'</div></footer><script src="/support.js?v=20261013-03"></script></body></html>'
+        '<footer class="site-footer"><div><div class="brand"><span class="brand-mark">G</span>GlobalTools</div><p>'+(ui?ui.footerText:"Free online tools for everyone.")+'</p></div><div class="footer-links"><a href="/sobre.html">'+(ui?ui.about:"About")+'</a><a href="/contato.html">'+(ui?ui.contact:"Contact")+'</a><a href="/privacy.html">'+(ui?ui.privacy:"Privacy")+'</a><a href="/terms.html">'+(ui?ui.terms:"Terms")+'</a></div><div class="language-links">'+languageLinks+'</div></footer><script src="/support.js?v=20261016-01"></script></body></html>'
       ].join('');
       res.writeHead(200, {"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-cache, no-store, must-revalidate"});
       return res.end(html);
@@ -610,7 +610,7 @@ const server = http.createServer((req, res) => {
   if (ext === ".html") {
     let html = fs.readFileSync(finalPath, "utf8");
     html = html.replaceAll("G-DM7CKZRD30", "G-061NQ52GBQ");
-    html = html.replaceAll("https://globaltools-international.example", siteUrl(req));
+    html = html.replaceAll("https://globaltoolsnow.com", siteUrl(req));
     if (!/<link\b[^>]*rel=["'](?:shortcut\s+)?icon["']/i.test(html)) html = html.replace(/<head>/i, '<head><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="manifest" href="/site.webmanifest">');
     const noAdsPage = urlPath === "/login.html" ||
       urlPath === "/account.html" ||
@@ -624,13 +624,13 @@ const server = http.createServer((req, res) => {
     } else if (!html.includes("pagead2.googlesyndication.com/pagead/js/adsbygoogle.js")) {
       html = html.replace(/<head>/i, '<head><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6472882150880001" crossorigin="anonymous"></script>');
     }
-    html = html.replace(/\/styles\.css\?v=[^"'\\s]+/g, "/styles.css?v=20261013-03")
-      .replace(/\/app\.js\?v=[^"'\\s]+/g, "/app.js?v=20261013-03")
-      .replace(/\/language\.js\?v=[^"'\\s]+/g, "/language.js?v=20261013-03")
-      .replace(/\/support\.js\?v=[^"'\\s]+/g, "/support.js?v=20261013-03");
+    html = html.replace(/\/styles\.css\?v=[^"'\\s]+/g, "/styles.css?v=20261016-01")
+      .replace(/\/app\.js\?v=[^"'\\s]+/g, "/app.js?v=20261016-01")
+      .replace(/\/language\.js\?v=[^"'\\s]+/g, "/language.js?v=20261016-01")
+      .replace(/\/support\.js\?v=[^"'\\s]+/g, "/support.js?v=20261016-01");
     if (!html.includes("G-061NQ52GBQ")) html = html.replace(/<head>/i, `<head><script async src="https://www.googletagmanager.com/gtag/js?id=G-061NQ52GBQ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-061NQ52GBQ");</script>`);
-    if (!/^\/(pt|es|fr)\//i.test(urlPath) && !/^\/tools\//i.test(urlPath) && !html.includes("/language.js")) html = html.replace(/<\/head>/i, `<script defer src="/language.js?v=20261013-03"></script></head>`);
-    if (!html.includes("/support.js")) html = html.replace(/<\/body>/i, `<script defer src="/support.js?v=20261013-03"></script></body>`);
+    if (!/^\/(pt|es|fr)\//i.test(urlPath) && !/^\/tools\//i.test(urlPath) && !html.includes("/language.js")) html = html.replace(/<\/head>/i, `<script defer src="/language.js?v=20261016-01"></script></head>`);
+    if (!html.includes("/support.js")) html = html.replace(/<\/body>/i, `<script defer src="/support.js?v=20261016-01"></script></body>`);
     res.writeHead(200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate"});
     return res.end(html);
   }
