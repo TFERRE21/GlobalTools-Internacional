@@ -21,6 +21,37 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "GlobalTools <onboarding@resend.dev>";
 
+// Periodic SEO research worker. Set SEO_ROBOT_ENABLED=false to disable.
+const SEO_ROBOT_ENABLED = process.env.SEO_ROBOT_ENABLED !== "false";
+const SEO_INTERVAL_MINUTES = Math.max(5, Number(process.env.SEO_INTERVAL_MINUTES) || 30);
+let seoRobotChild = null;
+let seoRobotTimer = null;
+let seoRobotStopping = false;
+function runSeoRobotCycle() {
+  if (seoRobotStopping || seoRobotChild) return;
+  const script = path.join(ROOT, "scripts", "seo-robot.js");
+  if (!fs.existsSync(script)) {
+    console.warn("[seo-worker] script missing:", script);
+    return;
+  }
+  console.log("[seo-worker] cycle starting");
+  seoRobotChild = spawn(process.execPath, [script], {
+    cwd: ROOT,
+    env: { ...process.env, PUBLIC_SITE_URL, SEO_DATA_DIR: process.env.SEO_DATA_DIR || path.join(ROOT, "seo-data") },
+    stdio: ["ignore", "inherit", "inherit"]
+  });
+  seoRobotChild.on("error", error => console.error("[seo-worker] spawn error:", error.message));
+  seoRobotChild.on("exit", (code, signal) => {
+    seoRobotChild = null;
+    console.log("[seo-worker] cycle finished", JSON.stringify({ code, signal, nextMinutes: SEO_INTERVAL_MINUTES }));
+  });
+}
+function stopSeoRobot() {
+  seoRobotStopping = true;
+  if (seoRobotTimer) clearInterval(seoRobotTimer);
+  if (seoRobotChild) seoRobotChild.kill("SIGTERM");
+}
+
 const PRODUCTS = {
   "small-business-finance-dashboard": {
     name: "Small Business Finance Dashboard",
@@ -644,6 +675,12 @@ const gateway = http.createServer(async (req, res) => {
   }
 });
 
+if (SEO_ROBOT_ENABLED) {
+  console.log("[seo-worker] persistent SEO worker online; every " + SEO_INTERVAL_MINUTES + " minutes");
+  runSeoRobotCycle();
+  seoRobotTimer = setInterval(runSeoRobotCycle, SEO_INTERVAL_MINUTES * 60 * 1000);
+  if (typeof seoRobotTimer.unref === "function") seoRobotTimer.unref();
+}
 gateway.listen(PORT, "0.0.0.0", () => console.log("GlobalTools gateway running on port " + PORT + " (core " + CORE_PORT + ")"));
-process.on("SIGTERM", () => { core.kill("SIGTERM"); process.exit(0); });
-process.on("SIGINT", () => { core.kill("SIGINT"); process.exit(0); });
+process.on("SIGTERM", () => { stopSeoRobot(); core.kill("SIGTERM"); process.exit(0); });
+process.on("SIGINT", () => { stopSeoRobot(); core.kill("SIGINT"); process.exit(0); });
