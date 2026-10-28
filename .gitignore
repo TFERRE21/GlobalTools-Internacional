@@ -8,3 +8,6 @@ data/*.json
 sessions*.json
 .env.*
 !.env.example
+
+# SEO robot runtime output (retained through mounted data volume when configured)
+seo-data/*.json
