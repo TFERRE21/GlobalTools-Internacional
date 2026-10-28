@@ -17,7 +17,10 @@ jobs:
         with:
           node-version: "22"
       - name: Validate syntax
-        run: node --check scripts/seo-robot.js
+        run: |
+          node --check scripts/seo-robot.js
+          node --check server.js
+          node --check gateway.js
       - name: Run SEO research
         run: node scripts/seo-robot.js
       - name: Commit SEO catalog and sitemap
