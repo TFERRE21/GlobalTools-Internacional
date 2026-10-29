@@ -5,4 +5,5 @@ Disallow: /account.html
 Disallow: /account-success.html
 Disallow: /products/*-success.html
 
+
 Sitemap: https://globaltoolsnow.com/sitemap.xml
