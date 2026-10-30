@@ -1,10 +1,10 @@
 {
-  "seedIndex": 5,
-  "totalRuns": 5,
-  "lastRunAt": "2026-10-30T05:52:11.304Z",
+  "seedIndex": 6,
+  "totalRuns": 6,
+  "lastRunAt": "2026-10-30T12:58:09.696Z",
   "lastError": null,
-  "lastSeed": "compress PDF online",
-  "keywordCount": 50,
+  "lastSeed": "merge PDF files",
+  "keywordCount": 60,
   "newKeywordsThisRun": 10,
   "suggestionCount": 10,
   "sitemapUrlCount": 128
