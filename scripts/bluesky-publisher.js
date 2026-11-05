@@ -114,7 +114,7 @@ async function main() {
   const locales = ["en", "pt", "es"];
   const dayNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
   const locale = locales[((dayNumber % locales.length) + locales.length) % locales.length];
-  const item = (queue.posts || []).find(p => p.locale === locale && p.channel === "linkedin") || (queue.posts || []).find(p => p.locale === locale);
+  const item = (queue.posts || []).find(p => p.locale === locale && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === locale);
   if (!item) fail("No marketing draft found for locale " + locale + ".");
   const paragraphs = String(item.text || "").split(/\n\n/).map(s => s.trim()).filter(Boolean);
   const summary = paragraphs.find(s => s !== item.title && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || item.title;
