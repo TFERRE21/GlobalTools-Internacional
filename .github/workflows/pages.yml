@@ -25,6 +25,7 @@ jobs:
           node --check server.js
           node --check gateway.js
           node --check app.js
+          node --check scripts/marketing-robot.js
       - name: Smoke test domain-aware SEO endpoints
         env:
           PORT: 3400
@@ -78,6 +79,8 @@ jobs:
           curl -fsS http://127.0.0.1:3500/ads.txt -o /tmp/ads.txt
           grep -Fx "google.com, pub-6472882150880001, DIRECT, f08c47fec0942fa0" /tmp/ads.txt
           curl -fsS http://127.0.0.1:3500/ | grep -F "GlobalTools — Free Online Tools"
+          curl -fsS http://127.0.0.1:3500/marketing-center.html | grep -F "Central de Divulgação"
+          curl -fsS http://127.0.0.1:3500/marketing/queue.json | grep -F "character-count"
           curl -fsS http://127.0.0.1:3500/store.html -o /tmp/store.html
           grep -F 'adsbygoogle.js?client=ca-pub-6472882150880001' /tmp/store.html
           test "$(grep -o 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js' /tmp/store.html | wc -l)" -eq 1
