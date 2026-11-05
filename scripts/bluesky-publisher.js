@@ -9,8 +9,9 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const queuePath = path.join(root, "marketing", "queue.json");
 const statePath = path.join(process.env.GLOBALTOOLS_DATA_DIR || path.join(root, "data"), "bluesky-state.json");
-const handle = process.env.BLUESKY_HANDLE;
-const password = process.env.BLUESKY_APP_PASSWORD;
+// Normalize common dashboard copy/paste formatting without exposing credentials.
+const handle = String(process.env.BLUESKY_HANDLE || "").trim().replace(/^@/, "");
+const password = String(process.env.BLUESKY_APP_PASSWORD || "").trim();
 const service = (process.env.BLUESKY_SERVICE || "https://bsky.social").replace(/\/$/, "");
 
 function fail(message) {
@@ -102,6 +103,7 @@ async function main() {
   const now = new Date();
   const day = now.toISOString().slice(0, 10);
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, "utf8")) : {};
+  console.log("[bluesky-publisher] authenticating handle " + handle);
   const session = await api("com.atproto.server.createSession", { identifier: handle, password });
   if (!session.did || !session.accessJwt) fail("Bluesky session response did not include DID/access token.");
   await followRelevantActors(session, state, day);
