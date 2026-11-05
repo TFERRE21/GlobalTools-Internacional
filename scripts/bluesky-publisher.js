@@ -8,7 +8,7 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const queuePath = path.join(root, "marketing", "queue.json");
-const statePath = path.join(root, "marketing", "bluesky-state.json");
+const statePath = path.join(process.env.GLOBALTOOLS_DATA_DIR || path.join(root, "data"), "bluesky-state.json");
 const handle = process.env.BLUESKY_HANDLE;
 const password = process.env.BLUESKY_APP_PASSWORD;
 const service = (process.env.BLUESKY_SERVICE || "https://bsky.social").replace(/\/$/, "");
