@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-11-05T00:00:00.000Z",
+  "campaign": "character-count",
+  "posts": [
+    {
+      "id": "character-count-en-linkedin",
+      "campaign": "character-count",
+      "locale": "en",
+      "channel": "linkedin",
+      "channelLabel": "LinkedIn",
+      "title": "Check character limits before you publish",
+      "text": "Check character limits before you publish\n\nCount characters and words before posting a bio, description or short message.\n\nOpen the free character counter: https://globaltoolsnow.com/tools/character-counter.html?utm_source=linkedin&utm_medium=organic_social&utm_campaign=character-count&utm_content=en\n\n#OnlineTools #SmallBusiness",
+      "url": "https://globaltoolsnow.com/tools/character-counter.html?utm_source=linkedin&utm_medium=organic_social&utm_campaign=character-count&utm_content=en",
+      "shareUrl": "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fglobaltoolsnow.com%2Ftools%2Fcharacter-counter.html%3Futm_source%3Dlinkedin%26utm_medium%3Dorganic_social%26utm_campaign%3Dcharacter-count%26utm_content%3Den"
+    },
+    {
+      "id": "character-count-pt-linkedin",
+      "campaign": "character-count",
+      "locale": "pt",
+      "channel": "linkedin",
+      "channelLabel": "LinkedIn",
+      "title": "Confira o limite de caracteres antes de publicar",
+      "text": "Confira o limite de caracteres antes de publicar\n\nConte caracteres e palavras antes de publicar uma bio ou descrição.\n\nAbrir o contador grátis: https://globaltoolsnow.com/tools/character-counter.html?utm_source=linkedin&utm_medium=organic_social&utm_campaign=character-count&utm_content=pt\n\n#FerramentasOnline #PequenosNegocios",
+      "url": "https://globaltoolsnow.com/tools/character-counter.html?utm_source=linkedin&utm_medium=organic_social&utm_campaign=character-count&utm_content=pt",
+      "shareUrl": "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fglobaltoolsnow.com%2Ftools%2Fcharacter-counter.html%3Futm_source%3Dlinkedin%26utm_medium%3Dorganic_social%26utm_campaign%3Dcharacter-count%26utm_content%3Dpt"
+    },
+    {
+      "id": "character-count-es-linkedin",
+      "campaign": "character-count",
+      "locale": "es",
+      "channel": "linkedin",
+      "channelLabel": "LinkedIn",
+      "title": "Comprueba el límite de caracteres antes de publicar",
+      "text": "Comprueba el límite de caracteres antes de publicar\n\nCuenta caracteres y palabras antes de publicar una biografía o descripción.\n\nAbrir el contador gratis: https://globaltoolsnow.com/tools/character-counter.html?utm_source=linkedin&utm_medium=organic_social&utm_campaign=character-count&utm_content=es\n\n#HerramientasOnline #PequeñosNegocios",
+      "url": "https://globaltoolsnow.com/tools/character-counter.html?utm_source=linkedin&utm_medium=organic_social&utm_campaign=character-count&utm_content=es",
+      "shareUrl": "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fglobaltoolsnow.com%2Ftools%2Fcharacter-counter.html%3Futm_source%3Dlinkedin%26utm_medium%3Dorganic_social%26utm_campaign%3Dcharacter-count%26utm_content%3Des"
+    }
+  ],
+  "directories": [
+    {
+      "name": "Product Hunt",
+      "url": "https://www.producthunt.com/posts/new",
+      "note": "Launch manually from a personal maker account and participate authentically."
+    },
+    {
+      "name": "AlternativeTo",
+      "url": "https://alternativeto.net/",
+      "note": "Suggest a listing if the product is a genuine alternative in its category."
+    },
+    {
+      "name": "Hacker News — Show HN",
+      "url": "https://news.ycombinator.com/submit",
+      "note": "Share only a working product with a useful explanation."
+    },
+    {
+      "name": "Indie Hackers",
+      "url": "https://www.indiehackers.com/",
+      "note": "Share lessons and useful details; avoid drive-by promotion."
+    },
+    {
+      "name": "SaaSHub",
+      "url": "https://www.saashub.com/",
+      "note": "Check listing eligibility and category fit."
+    }
+  ],
+  "policy": "Drafts and share links only. No automatic posting, scraping, mass messaging, fake engagement or unsolicited email."
+}
