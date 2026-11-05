@@ -96,6 +96,64 @@ async function followRelevantActors(session, state, day) {
     }
   }
 }
+
+function xml(value) {
+  return String(value || "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[ch]));
+}
+function wrapText(value, max = 34, lines = 2) {
+  const words = String(value || "").split(/\\s+/);
+  const out = [];
+  let line = "";
+  for (const word of words) {
+    const next = line ? line + " " + word : word;
+    if (next.length > max && line) { out.push(line); line = word; }
+    else line = next;
+    if (out.length === lines) break;
+  }
+  if (line && out.length < lines) out.push(line);
+  return out;
+}
+async function createCampaignImage(item, summary, session) {
+  const sharp = require("sharp");
+  const host = (() => { try { return new URL(item.url).hostname.replace(/^www\\./, ""); } catch { return "globaltoolsnow.com"; } })();
+  const campaign = String(item.campaign || "").toLowerCase();
+  const palettes = [
+    { match: /calc|percent|average|date|word|character/, color: "#38bdf8", label: "CALCULATORS & ONLINE TOOLS" },
+    { match: /daymoney|cash|finance|freelancer|business|oolivo/, color: "#34d399", label: "FINANCE & DIGITAL BUSINESS" },
+    { match: /versos|music/, color: "#c084fc", label: "MUSIC & LYRICS" },
+    { match: /biblia|conecta/, color: "#fbbf24", label: "BIBLE & DEVOTIONAL STUDY" },
+    { match: /cripto|bitcoin|crypto/, color: "#f59e0b", label: "CRYPTO & MARKET TOOLS" }
+  ];
+  const theme = palettes.find(p => p.match.test(campaign)) || { color: "#39e58c", label: "DIGITAL INNOVATION" };
+  const titleLines = wrapText(item.title || "Discover smarter digital tools", 30, 2);
+  const summaryLines = wrapText(summary, 46, 2);
+  const titleSvg = titleLines.map((line, i) => '<text x="78" y="' + (270 + i * 68) + '" fill="#ffffff" font-size="54" font-weight="800">' + xml(line) + '</text>').join("");
+  const summarySvg = summaryLines.map((line, i) => '<text x="82" y="' + (430 + i * 38) + '" fill="#cbd5e1" font-size="25">' + xml(line) + '</text>').join("");
+  const svg = `<svg width="1200" height="675" viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071827"/><stop offset="1" stop-color="#102f3c"/></linearGradient><radialGradient id="glow"><stop stop-color="${theme.color}" stop-opacity=".32"/><stop offset="1" stop-color="${theme.color}" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1200" height="675" rx="34" fill="url(#bg)"/><circle cx="1030" cy="130" r="390" fill="url(#glow)"/>
+  <path d="M0 560 Q360 430 720 580 T1200 500 V675 H0Z" fill="${theme.color}" opacity=".08"/>
+  <circle cx="1030" cy="320" r="175" fill="none" stroke="${theme.color}" stroke-opacity=".35" stroke-width="2"/><circle cx="1030" cy="320" r="130" fill="none" stroke="${theme.color}" stroke-opacity=".22" stroke-width="2"/>
+  <g fill="none" stroke="${theme.color}" stroke-width="5" opacity=".8"><path d="M890 320h280M1030 180v280M930 220l200 200M1130 220L930 420"/></g>
+  <circle cx="1030" cy="320" r="58" fill="${theme.color}" opacity=".18"/><text x="1030" y="342" text-anchor="middle" font-family="Arial" font-size="64" font-weight="bold" fill="#fff">G</text>
+  <rect x="78" y="72" width="12" height="52" rx="6" fill="${theme.color}"/><text x="112" y="110" font-family="Arial" font-size="31" font-weight="700" fill="#fff">GlobalTools</text><text x="315" y="110" font-family="Arial" font-size="25" fill="${theme.color}">DIGITAL INNOVATION</text>
+  <text x="82" y="205" font-family="Arial" font-size="19" letter-spacing="4" font-weight="700" fill="${theme.color}">${xml(theme.label)}</text>
+  ${titleSvg}${summarySvg}
+  <rect x="78" y="548" width="1044" height="2" fill="#ffffff" opacity=".16"/><text x="82" y="602" font-family="Arial" font-size="25" font-weight="700" fill="#ffffff">${xml(host)}</text><text x="1118" y="602" text-anchor="end" font-family="Arial" font-size="18" fill="${theme.color}">EXPLORE MORE  ↗</text>
+  </svg>`;
+  const png = await sharp(Buffer.from(svg)).png().toBuffer();
+  const response = await fetch(service + "/xrpc/com.atproto.repo.uploadBlob", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + session.accessJwt, "Content-Type": "image/png" },
+    body: png
+  });
+  const raw = await response.text();
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch {}
+  if (!response.ok || !data.blob) throw new Error("image upload failed: HTTP " + response.status + " " + (data.message || raw.slice(0, 200)));
+  return data.blob;
+}
+
 async function main() {
   if (!handle || !password) fail("Missing BLUESKY_HANDLE or BLUESKY_APP_PASSWORD repository secrets.");
   if (!fs.existsSync(queuePath)) fail("marketing/queue.json does not exist.");
@@ -121,10 +179,18 @@ async function main() {
   const paragraphs = String(item.text || "").split(/\n\n/).map(s => s.trim()).filter(Boolean);
   const summary = paragraphs.find(s => s !== item.title && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || item.title;
   const postText = fitPost(item.title, summary, item.url);
+  let embed;
+  try {
+    const blob = await createCampaignImage(item, summary, session);
+    embed = { $type: "app.bsky.embed.images", images: [{ alt: "GlobalTools campaign: " + item.title + ". " + summary, image: blob, aspectRatio: { width: 1200, height: 675 } }] };
+    console.log("[bluesky-publisher] campaign image created and uploaded for " + item.campaign);
+  } catch (error) {
+    console.warn("[bluesky-publisher] campaign image unavailable; publishing text only:", error.message);
+  }
   const record = await api("com.atproto.repo.createRecord", {
     repo: session.did,
     collection: "app.bsky.feed.post",
-    record: { $type: "app.bsky.feed.post", text: postText, createdAt: now.toISOString() }
+    record: { $type: "app.bsky.feed.post", text: postText, createdAt: now.toISOString(), ...(embed ? { embed } : {}) }
   }, session.accessJwt);
   const nextState = {
     lastPublishedDate: day,
