@@ -175,12 +175,12 @@ const NEWS_FEEDS = [
   { category: "science", url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml" }
 ];
 function decodeXml(value) {
-  return String(value || "").replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, "$1")
+  return String(value || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
     .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;/g, "'")
-    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
     .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/<[^>]+>/g, " ")
-    .replace(/\\s+/g, " ").trim();
+    .replace(/\s+/g, " ").trim();
 }
 function xmlTag(block, tag) {
   const match = block.match(new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + tag + ">", "i"));
@@ -190,36 +190,27 @@ async function fetchWorldNews(state) {
   const seen = new Set(Array.isArray(state.seenNewsLinks) ? state.seenNewsLinks : []);
   for (const feed of NEWS_FEEDS) {
     try {
-      const response = await fetch(feed.url, { headers: { "User-Agent": "GlobalToolsNewsBot/1.0 (news summaries with source attribution)" }, signal: AbortSignal.timeout(12000) });
+      const response = await fetch(feed.url, { headers: { "User-Agent": "GlobalToolsNewsBot/1.0" }, signal: AbortSignal.timeout(12000) });
       if (!response.ok) { console.warn("[bluesky-publisher] news feed HTTP " + response.status + ": " + feed.category); continue; }
       const xmlText = await response.text();
-      const blocks = xmlText.match(/<item(?:\\s[^>]*)?>[\\s\\S]*?<\\/item>/gi) || [];
+      const blocks = xmlText.match(/<item(?:\s[^>]*)?>[\s\S]*?<\/item>/gi) || [];
       for (const block of blocks) {
         const title = xmlTag(block, "title");
         const link = xmlTag(block, "link");
         const description = xmlTag(block, "description");
         const pubDate = xmlTag(block, "pubDate");
         const timestamp = Date.parse(pubDate);
-        if (!title || !/^https?:\\/\\//i.test(link) || seen.has(link)) continue;
-        if (Number.isFinite(timestamp) && Date.now() - timestamp > 48 * 60 * 60 * 1000) continue;
+        if (!title || !/^https?:\/\//i.test(link) || seen.has(link)) continue;
+        if (!Number.isFinite(timestamp) || Date.now() - timestamp > 48 * 60 * 60 * 1000 || timestamp > Date.now() + 5 * 60 * 1000) continue;
         const text = (title + " " + description).toLowerCase();
-        let site = { name: "GlobalTools", url: "https://globaltoolsnow.com/", reason: "Explore practical digital tools and useful resources." };
-        if (/bitcoin|crypto|blockchain|digital asset/.test(text)) site = { name: "CriptoProBot", url: "https://criptoprobot.com.br/", reason: "Explore crypto tools and market information." };
-        else if (/artificial intelligence|\bai\b|technology|software|cyber|robot|chip|computer/.test(text)) site = { name: "GlobalTools", url: "https://globaltoolsnow.com/", reason: "Explore practical technology and productivity tools." };
-        else if (/inflation|economy|interest rate|bank|finance|business|market|company/.test(text)) site = { name: "DayMoney", url: "https://daymoney.com.br/", reason: "Explore practical personal finance resources." };
-        else if (/music|singer|album|concert|song/.test(text)) site = { name: "Versos Musicais", url: "https://versosmusicais.com.br/", reason: "Explore music and lyrics." };
-        else if (/education|school|learning|bible|religion/.test(text)) site = { name: "Conecta Bíblia", url: "https://conectabiblia.com.br/", reason: "Explore reading and study resources." };
-        const host = new URL(link).hostname.replace(/^www\\./, "");
-        return {
-          campaign: "world-news-" + feed.category,
-          title,
-          summary: description || title,
-          url: link,
-          source: host,
-          relatedSite: site,
-          news: true,
-          locale: "en+pt"
-        };
+        let site = { name: "GlobalTools", url: "https://globaltoolsnow.com/" };
+        if (/bitcoin|crypto|blockchain|digital asset/.test(text)) site = { name: "CriptoProBot", url: "https://criptoprobot.com.br/" };
+        else if (/inflation|economy|interest rate|bank|finance|business|market|company/.test(text)) site = { name: "DayMoney", url: "https://daymoney.com.br/" };
+        else if (/music|singer|album|concert|song/.test(text)) site = { name: "Versos Musicais", url: "https://versosmusicais.com.br/" };
+        else if (/bible|religion|faith/.test(text)) site = { name: "Conecta Bíblia", url: "https://conectabiblia.com.br/" };
+        else if (/calculator|math|percentage/.test(text)) site = { name: "CalcWorld", url: "https://calcworld.com.br/" };
+        const host = new URL(link).hostname.replace(/^www\./, "");
+        return { campaign: "world-news-" + feed.category, title, summary: description || title, url: link, source: host, relatedSite: site, news: true };
       }
     } catch (error) {
       console.warn("[bluesky-publisher] news feed unavailable (" + feed.category + "): " + error.message);
@@ -280,7 +271,8 @@ async function main() {
   const postText = fitPost(postTitle, postSummary, postUrl);
   let embed;
   try {
-    const imageItem = isNews ? { ...item, title: item.title, campaign: item.campaign, url: item.relatedSite.url } : item;\n    const blob = await createCampaignImage(imageItem, summary, session);
+    const imageItem = isNews ? { ...item, title: item.title, campaign: item.campaign, url: item.relatedSite.url } : item;
+    const blob = await createCampaignImage(imageItem, summary, session);
     embed = { $type: "app.bsky.embed.images", images: [{ alt: (isNews ? "World news illustration: " : "GlobalTools campaign: ") + item.title + ". " + summary, image: blob, aspectRatio: { width: 1200, height: 675 } }] };
     console.log("[bluesky-publisher] " + (isNews ? "news" : "campaign") + " image created and uploaded for " + item.campaign);
   } catch (error) {
