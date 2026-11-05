@@ -26,6 +26,7 @@ jobs:
           node --check gateway.js
           node --check app.js
           node --check scripts/marketing-robot.js
+          node --check scripts/bluesky-publisher.js
       - name: Smoke test domain-aware SEO endpoints
         env:
           PORT: 3400
