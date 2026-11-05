@@ -49,11 +49,11 @@ async function api(pathname, body, token) {
 const AUTO_FOLLOW = process.env.BLUESKY_AUTO_FOLLOW === "true";
 const MAX_FOLLOWS_PER_DAY = Math.min(3, Math.max(0, Number(process.env.BLUESKY_MAX_FOLLOWS_PER_DAY) || 2));
 const DISCOVERY_TERMS = ["SaaS small business", "online tools productivity", "Bitcoin crypto", "AI technology startup"];
-async function discoverActors(term) {
+async function discoverActors(term, accessJwt) {
   const url = new URL(service + "/xrpc/app.bsky.actor.searchActors");
   url.searchParams.set("q", term);
   url.searchParams.set("limit", "15");
-  const response = await fetch(url);
+  const response = await fetch(url, { headers: { Authorization: "Bearer " + accessJwt } });
   if (!response.ok) throw new Error("Bluesky actor search returned HTTP " + response.status);
   const data = await response.json();
   return Array.isArray(data.actors) ? data.actors : [];
@@ -69,7 +69,7 @@ async function followRelevantActors(session, state, day) {
   for (const term of DISCOVERY_TERMS) {
     if (!remaining) break;
     let actors = [];
-    try { actors = await discoverActors(term); }
+    try { actors = await discoverActors(term, session.accessJwt); }
     catch (error) { console.warn("[bluesky-publisher] profile discovery skipped:", error.message); continue; }
     for (const actor of actors) {
       if (!remaining) break;
