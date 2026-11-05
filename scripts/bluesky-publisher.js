@@ -293,10 +293,11 @@ async function main() {
     text: postText,
     followedDids: state.followedDids || [],
     followDate: state.followDate || null,
-    followsToday: state.followsToday || 0
+    followsToday: state.followsToday || 0,
+    seenNewsLinks: isNews ? Array.from(new Set([...(state.seenNewsLinks || []), item.url])).slice(-200) : (state.seenNewsLinks || [])
   };
   fs.mkdirSync(path.dirname(statePath), { recursive: true });
   fs.writeFileSync(statePath, JSON.stringify(nextState, null, 2) + "\n");
-  console.log("[bluesky-publisher] published " + locale + " post: " + record.uri);
+  console.log("[bluesky-publisher] published " + (isNews ? "news" : "en+pt") + " post: " + record.uri);
 }
 main().catch(error => fail(error.message));
