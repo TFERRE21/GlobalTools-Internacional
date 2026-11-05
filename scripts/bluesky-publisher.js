@@ -125,6 +125,20 @@ async function createCampaignImage(item, summary, session) {
     { match: /cripto|bitcoin|crypto/, color: "#f59e0b", label: "CRYPTO & MARKET TOOLS" }
   ];
   const theme = palettes.find(p => p.match.test(campaign)) || { color: "#39e58c", label: "DIGITAL INNOVATION" };
+  // Stable per campaign/day: retries keep the same asset, while each new daily post gets a distinct composition.
+  const visualKey = [new Date().toISOString().slice(0, 10), campaign, item.title || ""].join("|");
+  let visualSeed = 0;
+  for (const ch of visualKey) visualSeed = (visualSeed * 31 + ch.charCodeAt(0)) >>> 0;
+  const variant = visualSeed % 4;
+  const accentX = 850 + (visualSeed % 220);
+  const accentY = 245 + (Math.floor(visualSeed / 7) % 170);
+  const visualDecor = variant === 0
+    ? `<g fill="none" stroke="${theme.color}" opacity=".42"><circle cx="${accentX}" cy="${accentY}" r="78" stroke-width="3"/><circle cx="${accentX}" cy="${accentY}" r="125" stroke-width="2"/><circle cx="${accentX}" cy="${accentY}" r="172" stroke-width="1"/><path d="M${accentX-190} ${accentY}h380 M${accentX} ${accentY-190}v380" stroke-width="2"/></g>`
+    : variant === 1
+    ? `<g fill="${theme.color}" opacity=".28">${Array.from({length: 42}, (_,i) => '<circle cx="' + (790+(i%7)*52) + '" cy="' + (155+Math.floor(i/7)*52) + '" r="' + (3+(i%3)*2) + '"/>').join("")}</g><path d="M820 500L1160 160" stroke="${theme.color}" stroke-width="3" opacity=".45"/>`
+    : variant === 2
+    ? `<g fill="none" stroke="${theme.color}" opacity=".38" stroke-width="3"><path d="M820 160h300v300H820z"/><path d="M855 195h230v230H855z"/><path d="M890 230h160v160H890z"/></g><circle cx="${accentX}" cy="${accentY}" r="54" fill="${theme.color}" opacity=".18"/>`
+    : `<g fill="${theme.color}" opacity=".2"><path d="M810 500L980 150h48L858 500z"/><path d="M910 500l170-350h48L958 500z"/><path d="M1010 500l140-290v100l-92 190z"/></g>`;
   const titleLines = wrapText(item.title || "Discover smarter digital tools", 30, 2);
   const summaryLines = wrapText(summary, 46, 2);
   const titleSvg = titleLines.map((line, i) => '<text x="78" y="' + (270 + i * 68) + '" fill="#ffffff" font-size="54" font-weight="800">' + xml(line) + '</text>').join("");
@@ -132,10 +146,9 @@ async function createCampaignImage(item, summary, session) {
   const svg = `<svg width="1200" height="675" viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071827"/><stop offset="1" stop-color="#102f3c"/></linearGradient><radialGradient id="glow"><stop stop-color="${theme.color}" stop-opacity=".32"/><stop offset="1" stop-color="${theme.color}" stop-opacity="0"/></radialGradient></defs>
   <rect width="1200" height="675" rx="34" fill="url(#bg)"/><circle cx="1030" cy="130" r="390" fill="url(#glow)"/>
-  <path d="M0 560 Q360 430 720 580 T1200 500 V675 H0Z" fill="${theme.color}" opacity=".08"/>
-  <circle cx="1030" cy="320" r="175" fill="none" stroke="${theme.color}" stroke-opacity=".35" stroke-width="2"/><circle cx="1030" cy="320" r="130" fill="none" stroke="${theme.color}" stroke-opacity=".22" stroke-width="2"/>
-  <g fill="none" stroke="${theme.color}" stroke-width="5" opacity=".8"><path d="M890 320h280M1030 180v280M930 220l200 200M1130 220L930 420"/></g>
-  <circle cx="1030" cy="320" r="58" fill="${theme.color}" opacity=".18"/><text x="1030" y="342" text-anchor="middle" font-family="Arial" font-size="64" font-weight="bold" fill="#fff">G</text>
+  <path d="M0 560 Q360 ${430+(visualSeed%80)} 720 580 T1200 500 V675 H0Z" fill="${theme.color}" opacity=".10"/>
+  ${visualDecor}
+  <circle cx="${accentX}" cy="${accentY}" r="58" fill="${theme.color}" opacity=".18"/><text x="${accentX}" y="${accentY+22}" text-anchor="middle" font-family="Arial" font-size="64" font-weight="bold" fill="#fff">G</text>
   <rect x="78" y="72" width="12" height="52" rx="6" fill="${theme.color}"/><text x="112" y="110" font-family="Arial" font-size="31" font-weight="700" fill="#fff">GlobalTools</text><text x="315" y="110" font-family="Arial" font-size="25" fill="${theme.color}">DIGITAL INNOVATION</text>
   <text x="82" y="205" font-family="Arial" font-size="19" letter-spacing="4" font-weight="700" fill="${theme.color}">${xml(theme.label)}</text>
   ${titleSvg}${summarySvg}
