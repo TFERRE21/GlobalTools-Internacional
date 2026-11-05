@@ -167,6 +167,67 @@ async function createCampaignImage(item, summary, session) {
   return data.blob;
 }
 
+
+const NEWS_FEEDS = [
+  { category: "technology", url: "https://feeds.bbci.co.uk/news/technology/rss.xml" },
+  { category: "world", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { category: "business", url: "https://feeds.bbci.co.uk/news/business/rss.xml" },
+  { category: "science", url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml" }
+];
+function decodeXml(value) {
+  return String(value || "").replace(/<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>/g, "$1")
+    .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/&#(\\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/<[^>]+>/g, " ")
+    .replace(/\\s+/g, " ").trim();
+}
+function xmlTag(block, tag) {
+  const match = block.match(new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + tag + ">", "i"));
+  return match ? decodeXml(match[1]) : "";
+}
+async function fetchWorldNews(state) {
+  const seen = new Set(Array.isArray(state.seenNewsLinks) ? state.seenNewsLinks : []);
+  for (const feed of NEWS_FEEDS) {
+    try {
+      const response = await fetch(feed.url, { headers: { "User-Agent": "GlobalToolsNewsBot/1.0 (news summaries with source attribution)" }, signal: AbortSignal.timeout(12000) });
+      if (!response.ok) { console.warn("[bluesky-publisher] news feed HTTP " + response.status + ": " + feed.category); continue; }
+      const xmlText = await response.text();
+      const blocks = xmlText.match(/<item(?:\\s[^>]*)?>[\\s\\S]*?<\\/item>/gi) || [];
+      for (const block of blocks) {
+        const title = xmlTag(block, "title");
+        const link = xmlTag(block, "link");
+        const description = xmlTag(block, "description");
+        const pubDate = xmlTag(block, "pubDate");
+        const timestamp = Date.parse(pubDate);
+        if (!title || !/^https?:\\/\\//i.test(link) || seen.has(link)) continue;
+        if (Number.isFinite(timestamp) && Date.now() - timestamp > 48 * 60 * 60 * 1000) continue;
+        const text = (title + " " + description).toLowerCase();
+        let site = { name: "GlobalTools", url: "https://globaltoolsnow.com/", reason: "Explore practical digital tools and useful resources." };
+        if (/bitcoin|crypto|blockchain|digital asset/.test(text)) site = { name: "CriptoProBot", url: "https://criptoprobot.com.br/", reason: "Explore crypto tools and market information." };
+        else if (/artificial intelligence|\bai\b|technology|software|cyber|robot|chip|computer/.test(text)) site = { name: "GlobalTools", url: "https://globaltoolsnow.com/", reason: "Explore practical technology and productivity tools." };
+        else if (/inflation|economy|interest rate|bank|finance|business|market|company/.test(text)) site = { name: "DayMoney", url: "https://daymoney.com.br/", reason: "Explore practical personal finance resources." };
+        else if (/music|singer|album|concert|song/.test(text)) site = { name: "Versos Musicais", url: "https://versosmusicais.com.br/", reason: "Explore music and lyrics." };
+        else if (/education|school|learning|bible|religion/.test(text)) site = { name: "Conecta Bíblia", url: "https://conectabiblia.com.br/", reason: "Explore reading and study resources." };
+        const host = new URL(link).hostname.replace(/^www\\./, "");
+        return {
+          campaign: "world-news-" + feed.category,
+          title,
+          summary: description || title,
+          url: link,
+          source: host,
+          relatedSite: site,
+          news: true,
+          locale: "en+pt"
+        };
+      }
+    } catch (error) {
+      console.warn("[bluesky-publisher] news feed unavailable (" + feed.category + "): " + error.message);
+    }
+  }
+  return null;
+}
+
 async function main() {
   if (!handle || !password) fail("Missing BLUESKY_HANDLE or BLUESKY_APP_PASSWORD repository secrets.");
   if (!fs.existsSync(queuePath)) fail("marketing/queue.json does not exist.");
@@ -184,25 +245,44 @@ async function main() {
     console.log("[bluesky-publisher] already published today; skipping post.");
     return;
   }
+
   const itemEn = (queue.posts || []).find(p => p.locale === "en" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "en");
   const itemPt = (queue.posts || []).find(p => p.locale === "pt" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "pt");
   if (!itemEn || !itemPt || itemEn.campaign !== itemPt.campaign) fail("Matching English and Portuguese campaign drafts not found.");
-  function extractSummary(item) {
-    const paragraphs = String(item.text || "").split(/\n\n/).map(s => s.trim()).filter(Boolean);
-    return paragraphs.find(s => s !== item.title && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || item.title;
+  function extractSummary(draft) {
+    const paragraphs = String(draft.text || "").split(/\\n\\n/).map(s => s.trim()).filter(Boolean);
+    return paragraphs.find(s => s !== draft.title && !s.startsWith("#") && !/^https?:\\/\\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || draft.title;
   }
-  const summaryEn = extractSummary(itemEn);
-  const summaryPt = extractSummary(itemPt);
-  const bilingualTitle = "EN: " + itemEn.title + "\nPT: " + itemPt.title;
-  const bilingualSummary = "EN: " + summaryEn + "\nPT: " + summaryPt;
-  const postText = fitPost(bilingualTitle, bilingualSummary, itemEn.url);
-  const item = itemEn;
-  const summary = summaryEn;
+  let item = itemEn;
+  let summaryEn = extractSummary(itemEn);
+  let summaryPt = extractSummary(itemPt);
+  let summary = summaryEn;
+  let postTitle = "EN: " + itemEn.title + "\\nPT: " + itemPt.title;
+  let postSummary = "EN: " + summaryEn + "\\nPT: " + summaryPt;
+  let postUrl = itemEn.url;
+  let isNews = false;
+  const dayNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
+  // One editorial news post every third day; promotional posts continue on the other days.
+  if (dayNumber % 3 === 0) {
+    const news = await fetchWorldNews(state);
+    if (news) {
+      item = { ...news, title: news.title, campaign: news.campaign };
+      summary = news.summary;
+      postTitle = "WORLD NEWS: " + news.title;
+      postSummary = news.summary.slice(0, 105) + " | PT: Acompanhe a notícia e veja um recurso relacionado em " + news.relatedSite.name + ": " + news.relatedSite.url;
+      postUrl = news.url;
+      isNews = true;
+      console.log("[bluesky-publisher] selected news from " + news.source + " linked to " + news.relatedSite.name);
+    } else {
+      console.log("[bluesky-publisher] no fresh news found; using regular campaign.");
+    }
+  }
+  const postText = fitPost(postTitle, postSummary, postUrl);
   let embed;
   try {
-    const blob = await createCampaignImage(item, summary, session);
-    embed = { $type: "app.bsky.embed.images", images: [{ alt: "GlobalTools campaign: " + item.title + ". " + summary, image: blob, aspectRatio: { width: 1200, height: 675 } }] };
-    console.log("[bluesky-publisher] campaign image created and uploaded for " + item.campaign);
+    const imageItem = isNews ? { ...item, title: item.title, campaign: item.campaign, url: item.relatedSite.url } : item;\n    const blob = await createCampaignImage(imageItem, summary, session);
+    embed = { $type: "app.bsky.embed.images", images: [{ alt: (isNews ? "World news illustration: " : "GlobalTools campaign: ") + item.title + ". " + summary, image: blob, aspectRatio: { width: 1200, height: 675 } }] };
+    console.log("[bluesky-publisher] " + (isNews ? "news" : "campaign") + " image created and uploaded for " + item.campaign);
   } catch (error) {
     console.warn("[bluesky-publisher] campaign image unavailable; publishing text only:", error.message);
   }
