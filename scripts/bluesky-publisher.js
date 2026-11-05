@@ -9,6 +9,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const queuePath = path.join(root, "marketing", "queue.json");
 const statePath = path.join(process.env.GLOBALTOOLS_DATA_DIR || path.join(root, "data"), "bluesky-state.json");
+const lockPath = statePath + ".lock";
 // Normalize common dashboard copy/paste formatting without exposing credentials.
 const handle = String(process.env.BLUESKY_HANDLE || "").trim().replace(/^@/, "");
 const password = String(process.env.BLUESKY_APP_PASSWORD || "").trim();
@@ -225,6 +226,20 @@ async function main() {
   const queue = JSON.parse(fs.readFileSync(queuePath, "utf8"));
   const now = new Date();
   const day = now.toISOString().slice(0, 10);
+  fs.mkdirSync(path.dirname(statePath), { recursive: true });
+  try {
+    const lock = fs.openSync(lockPath, "wx");
+    fs.writeFileSync(lock, JSON.stringify({ pid: process.pid, startedAt: now.toISOString() }));
+    fs.closeSync(lock);
+  } catch (error) {
+    if (error.code === "EEXIST") {
+      try {
+        const age = Date.now() - fs.statSync(lockPath).mtimeMs;
+        if (age > 15 * 60 * 1000) { fs.unlinkSync(lockPath); fs.writeFileSync(lockPath, JSON.stringify({ pid: process.pid, startedAt: now.toISOString() }), { flag: "wx" }); }
+        else { console.log("[bluesky-publisher] another publisher is active; skipping overlapping run."); return; }
+      } catch { console.log("[bluesky-publisher] publisher lock is active; skipping overlapping run."); return; }
+    } else throw error;
+  }
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, "utf8")) : {};
   console.log("[bluesky-publisher] authenticating handle " + handle);
   const session = await api("com.atproto.server.createSession", { identifier: handle, password });
@@ -241,8 +256,11 @@ async function main() {
   const itemPt = (queue.posts || []).find(p => p.locale === "pt" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "pt");
   if (!itemEn || !itemPt || itemEn.campaign !== itemPt.campaign) fail("Matching English and Portuguese campaign drafts not found.");
   function extractSummary(draft) {
-    const paragraphs = String(draft.text || "").split(/\\n\\n/).map(s => s.trim()).filter(Boolean);
-    return paragraphs.find(s => s !== draft.title && !s.startsWith("#") && !/^https?:\\/\\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || draft.title;
+    const normalize = value => String(value || "").toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    const title = normalize(draft.title);
+    const paragraphs = String(draft.text || "").split(/\\n\\s*\\n/).map(s => s.trim()).filter(Boolean);
+    const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\\/\\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s));
+    return candidate || (draft.locale === "pt" ? "Use ferramentas práticas para resolver tarefas do dia a dia com mais rapidez." : "Use practical tools to solve everyday tasks faster.");
   }
   let item = itemEn;
   let summaryEn = extractSummary(itemEn);
