@@ -256,18 +256,18 @@ async function main() {
   const itemPt = (queue.posts || []).find(p => p.locale === "pt" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "pt");
   if (!itemEn || !itemPt || itemEn.campaign !== itemPt.campaign) fail("Matching English and Portuguese campaign drafts not found.");
   function extractSummary(draft) {
-    const normalize = value => String(value || "").toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    const normalize = value => String(value || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
     const title = normalize(draft.title);
-    const paragraphs = String(draft.text || "").split(/\\n\\s*\\n/).map(s => s.trim()).filter(Boolean);
-    const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\\/\\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s));
+    const paragraphs = String(draft.text || "").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+    const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s));
     return candidate || (draft.locale === "pt" ? "Use ferramentas práticas para resolver tarefas do dia a dia com mais rapidez." : "Use practical tools to solve everyday tasks faster.");
   }
   let item = itemEn;
   let summaryEn = extractSummary(itemEn);
   let summaryPt = extractSummary(itemPt);
   let summary = summaryEn;
-  let postTitle = "EN: " + itemEn.title + "\\nPT: " + itemPt.title;
-  let postSummary = "EN: " + summaryEn + "\\nPT: " + summaryPt;
+  let postTitle = "EN: " + itemEn.title + "\nPT: " + itemPt.title;
+  let postSummary = "EN: " + summaryEn + "\nPT: " + summaryPt;
   let postUrl = itemEn.url;
   let isNews = false;
   const dayNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
