@@ -171,14 +171,20 @@ async function main() {
     console.log("[bluesky-publisher] already published today; skipping post.");
     return;
   }
-  const locales = ["en", "pt", "es"];
-  const dayNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
-  const locale = locales[((dayNumber % locales.length) + locales.length) % locales.length];
-  const item = (queue.posts || []).find(p => p.locale === locale && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === locale);
-  if (!item) fail("No marketing draft found for locale " + locale + ".");
-  const paragraphs = String(item.text || "").split(/\n\n/).map(s => s.trim()).filter(Boolean);
-  const summary = paragraphs.find(s => s !== item.title && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || item.title;
-  const postText = fitPost(item.title, summary, item.url);
+  const itemEn = (queue.posts || []).find(p => p.locale === "en" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "en");
+  const itemPt = (queue.posts || []).find(p => p.locale === "pt" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "pt");
+  if (!itemEn || !itemPt || itemEn.campaign !== itemPt.campaign) fail("Matching English and Portuguese campaign drafts not found.");
+  function extractSummary(item) {
+    const paragraphs = String(item.text || "").split(/\n\n/).map(s => s.trim()).filter(Boolean);
+    return paragraphs.find(s => s !== item.title && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s)) || item.title;
+  }
+  const summaryEn = extractSummary(itemEn);
+  const summaryPt = extractSummary(itemPt);
+  const bilingualTitle = "EN: " + itemEn.title + "\nPT: " + itemPt.title;
+  const bilingualSummary = "EN: " + summaryEn + "\nPT: " + summaryPt;
+  const postText = fitPost(bilingualTitle, bilingualSummary, itemEn.url);
+  const item = itemEn;
+  const summary = summaryEn;
   let embed;
   try {
     const blob = await createCampaignImage(item, summary, session);
@@ -194,7 +200,7 @@ async function main() {
   }, session.accessJwt);
   const nextState = {
     lastPublishedDate: day,
-    locale,
+    locale: "en+pt",
     campaign: item.campaign,
     uri: record.uri,
     cid: record.cid,
