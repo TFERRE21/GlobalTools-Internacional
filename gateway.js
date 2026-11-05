@@ -52,6 +52,49 @@ function stopSeoRobot() {
   if (seoRobotChild) seoRobotChild.kill("SIGTERM");
 }
 
+// Organic social publisher runs inside the long-lived VPS application process.
+// It refreshes the daily multilingual queue and lets the publisher enforce one post/day.
+const BLUESKY_ENABLED = process.env.BLUESKY_ENABLED === "true";
+const MARKETING_INTERVAL_MINUTES = Math.max(10, Number(process.env.MARKETING_INTERVAL_MINUTES) || 30);
+let marketingChild = null;
+let marketingTimer = null;
+let marketingStopping = false;
+function runMarketingCycle() {
+  if (marketingStopping || marketingChild) return;
+  const generator = path.join(ROOT, "scripts", "marketing-robot.js");
+  const publisher = path.join(ROOT, "scripts", "bluesky-publisher.js");
+  if (!fs.existsSync(generator) || !fs.existsSync(publisher)) {
+    console.warn("[marketing-worker] generator or publisher script missing");
+    return;
+  }
+  console.log("[marketing-worker] daily content/publishing cycle starting");
+  marketingChild = spawn(process.execPath, [generator], {
+    cwd: ROOT, env: { ...process.env, PUBLIC_SITE_URL }, stdio: ["ignore", "inherit", "inherit"]
+  });
+  marketingChild.on("error", error => console.error("[marketing-worker] generator error:", error.message));
+  marketingChild.on("exit", code => {
+    if (code !== 0) {
+      console.error("[marketing-worker] generator failed with code", code);
+      marketingChild = null;
+      return;
+    }
+    const child = spawn(process.execPath, [publisher], {
+      cwd: ROOT, env: { ...process.env, PUBLIC_SITE_URL }, stdio: ["ignore", "inherit", "inherit"]
+    });
+    marketingChild = child;
+    child.on("error", error => console.error("[marketing-worker] publisher error:", error.message));
+    child.on("exit", (publishCode, signal) => {
+      marketingChild = null;
+      console.log("[marketing-worker] cycle finished", JSON.stringify({ code: publishCode, signal }));
+    });
+  });
+}
+function stopMarketingWorker() {
+  marketingStopping = true;
+  if (marketingTimer) clearInterval(marketingTimer);
+  if (marketingChild) marketingChild.kill("SIGTERM");
+}
+
 const PRODUCTS = {
   "small-business-finance-dashboard": {
     name: "Small Business Finance Dashboard",
@@ -681,6 +724,14 @@ if (SEO_ROBOT_ENABLED) {
   seoRobotTimer = setInterval(runSeoRobotCycle, SEO_INTERVAL_MINUTES * 60 * 1000);
   if (typeof seoRobotTimer.unref === "function") seoRobotTimer.unref();
 }
+if (BLUESKY_ENABLED) {
+  console.log("[marketing-worker] persistent Bluesky publisher online; every " + MARKETING_INTERVAL_MINUTES + " minutes");
+  runMarketingCycle();
+  marketingTimer = setInterval(runMarketingCycle, MARKETING_INTERVAL_MINUTES * 60 * 1000);
+  if (typeof marketingTimer.unref === "function") marketingTimer.unref();
+} else {
+  console.log("[marketing-worker] disabled; set BLUESKY_ENABLED=true to activate");
+}
 gateway.listen(PORT, "0.0.0.0", () => console.log("GlobalTools gateway running on port " + PORT + " (core " + CORE_PORT + ")"));
-process.on("SIGTERM", () => { stopSeoRobot(); core.kill("SIGTERM"); process.exit(0); });
-process.on("SIGINT", () => { stopSeoRobot(); core.kill("SIGINT"); process.exit(0); });
+process.on("SIGTERM", () => { stopSeoRobot(); stopMarketingWorker(); core.kill("SIGTERM"); process.exit(0); });
+process.on("SIGINT", () => { stopSeoRobot(); stopMarketingWorker(); core.kill("SIGINT"); process.exit(0); });
