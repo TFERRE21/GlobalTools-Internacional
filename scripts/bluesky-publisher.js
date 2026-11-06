@@ -261,9 +261,9 @@ async function main() {
   const itemEn = (queue.posts || []).find(p => p.locale === "en" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "en");
   if (!itemEn) fail("English campaign draft not found.");
   function extractSummary(draft) {
-    const normalize = value => String(value || "").toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    const normalize = value => String(value || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
     const title = normalize(draft.title);
-    const paragraphs = String(draft.text || "").split(/\\n\\s*\\n/).map(s => s.trim()).filter(Boolean);
+    const paragraphs = String(draft.text || "").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
     const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\\/\\//i.test(s));
     return candidate || "Discover practical tools and useful resources for everyday tasks.";
   }
