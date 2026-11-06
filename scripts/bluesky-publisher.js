@@ -248,7 +248,7 @@ async function main() {
   await followRelevantActors(session, state, day);
   const alreadyPublishedToday = state.lastPublishedDate === day;
   const publishedToday = alreadyPublishedToday ? Number(state.dailyPostCount || 1) : 0;
-  const isExtraTestDay = day === "2026-11-06";
+  const isExtraTestDay = day === "2026-11-05" || day === "2026-11-06";
   const dailyLimit = isExtraTestDay ? 2 : 1;
   if (publishedToday >= dailyLimit) {
     fs.mkdirSync(path.dirname(statePath), { recursive: true });
