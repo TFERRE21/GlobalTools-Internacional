@@ -5,6 +5,7 @@
 // Credentials are supplied only through environment variables; never log them.
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 
 const root = path.resolve(__dirname, "..");
 const queuePath = path.join(root, "marketing", "queue.json");
@@ -127,10 +128,10 @@ async function createCampaignImage(item, summary, session) {
   ];
   const theme = palettes.find(p => p.match.test(campaign)) || { color: "#39e58c", label: "DIGITAL INNOVATION" };
   // Stable per campaign/day: retries keep the same asset, while each new daily post gets a distinct composition.
-  const visualKey = [new Date().toISOString().slice(0, 10), campaign, item.title || ""].join("|");
+  const visualKey = [new Date().toISOString(), campaign, item.title || "", crypto.randomBytes(16).toString("hex")].join("|");
   let visualSeed = 0;
   for (const ch of visualKey) visualSeed = (visualSeed * 31 + ch.charCodeAt(0)) >>> 0;
-  const variant = visualSeed % 4;
+  const variant = visualSeed % 8;
   const accentX = 850 + (visualSeed % 220);
   const accentY = 245 + (Math.floor(visualSeed / 7) % 170);
   const visualDecor = variant === 0
@@ -254,32 +255,28 @@ async function main() {
   }
 
   const itemEn = (queue.posts || []).find(p => p.locale === "en" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "en");
-  const itemPt = (queue.posts || []).find(p => p.locale === "pt" && p.channel === "bluesky") || (queue.posts || []).find(p => p.locale === "pt");
-  if (!itemEn || !itemPt || itemEn.campaign !== itemPt.campaign) fail("Matching English and Portuguese campaign drafts not found.");
+  if (!itemEn) fail("English campaign draft not found.");
   function extractSummary(draft) {
-    const normalize = value => String(value || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    const normalize = value => String(value || "").toLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
     const title = normalize(draft.title);
-    const paragraphs = String(draft.text || "").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
-    const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\/\//i.test(s) && !/^(Open|Try|See|Explore|Use|View|Abrir|Testar|Conheça|Ver|Usar|Conoce|Prueba|Explora)/i.test(s));
-    return candidate || (draft.locale === "pt" ? "Use ferramentas práticas para resolver tarefas do dia a dia com mais rapidez." : "Use practical tools to solve everyday tasks faster.");
+    const paragraphs = String(draft.text || "").split(/\\n\\s*\\n/).map(s => s.trim()).filter(Boolean);
+    const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\\/\\//i.test(s));
+    return candidate || "Discover practical tools and useful resources for everyday tasks.";
   }
   let item = itemEn;
-  let summaryEn = extractSummary(itemEn);
-  let summaryPt = extractSummary(itemPt);
-  let summary = summaryEn;
-  let postTitle = "EN: " + itemEn.title + "\nPT: " + itemPt.title;
-  let postSummary = "EN: " + summaryEn + "\nPT: " + summaryPt;
+  let summary = extractSummary(itemEn);
+  let postTitle = itemEn.title;
+  let postSummary = summary;
   let postUrl = itemEn.url;
   let isNews = false;
   const dayNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
-  // One editorial news post every third day; promotional posts continue on the other days.
   if (dayNumber % 3 === 0) {
     const news = await fetchWorldNews(state);
     if (news) {
       item = { ...news, title: news.title, campaign: news.campaign };
       summary = news.summary;
       postTitle = "WORLD NEWS: " + news.title;
-      postSummary = news.summary.slice(0, 105) + " | PT: Acompanhe a notícia e veja um recurso relacionado em " + news.relatedSite.name + ": " + news.relatedSite.url;
+      postSummary = news.summary.slice(0, 160);
       postUrl = news.url;
       isNews = true;
       console.log("[bluesky-publisher] selected news from " + news.source + " linked to " + news.relatedSite.name);
