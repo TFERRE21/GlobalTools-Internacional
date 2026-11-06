@@ -242,6 +242,7 @@ async function main() {
     } else throw error;
   }
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, "utf8")) : {};
+  process.on("exit", () => { try { fs.unlinkSync(lockPath); } catch {} });
   console.log("[bluesky-publisher] authenticating handle " + handle);
   const session = await api("com.atproto.server.createSession", { identifier: handle, password });
   if (!session.did || !session.accessJwt) fail("Bluesky session response did not include DID/access token.");
@@ -250,6 +251,7 @@ async function main() {
   const publishedToday = alreadyPublishedToday ? Number(state.dailyPostCount || 1) : 0;
   const isExtraTestDay = day === "2026-11-05" || day === "2026-11-06";
   const dailyLimit = isExtraTestDay ? 2 : 1;
+  console.log("[bluesky-publisher] schedule check", JSON.stringify({ utcDate: day, lastPublishedDate: state.lastPublishedDate || null, publishedToday, dailyLimit, isExtraTestDay }));
   if (publishedToday >= dailyLimit) {
     fs.mkdirSync(path.dirname(statePath), { recursive: true });
     fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n");
