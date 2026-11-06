@@ -246,11 +246,15 @@ async function main() {
   const session = await api("com.atproto.server.createSession", { identifier: handle, password });
   if (!session.did || !session.accessJwt) fail("Bluesky session response did not include DID/access token.");
   await followRelevantActors(session, state, day);
-  if (state.lastPublishedDate === day) {
+  const alreadyPublishedToday = state.lastPublishedDate === day;
+  const publishedToday = alreadyPublishedToday ? Number(state.dailyPostCount || 1) : 0;
+  const isExtraTestDay = day === "2026-11-06";
+  const dailyLimit = isExtraTestDay ? 2 : 1;
+  if (publishedToday >= dailyLimit) {
     fs.mkdirSync(path.dirname(statePath), { recursive: true });
     fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n");
     try { fs.unlinkSync(lockPath); } catch {}
-    console.log("[bluesky-publisher] already published today; skipping post.");
+    console.log("[bluesky-publisher] daily limit reached (" + publishedToday + "/" + dailyLimit + "); skipping post.");
     return;
   }
 
@@ -263,12 +267,21 @@ async function main() {
     const candidate = paragraphs.find(s => normalize(s) !== title && !normalize(s).startsWith(title) && !s.startsWith("#") && !/^https?:\\/\\//i.test(s));
     return candidate || "Discover practical tools and useful resources for everyday tasks.";
   }
-  let item = itemEn;
-  let summary = extractSummary(itemEn);
-  let postTitle = itemEn.title;
+  const isSecondTestPost = isExtraTestDay && publishedToday === 1;
+  let item = isSecondTestPost ? {
+    campaign: "daymoney-extra-test",
+    title: "Take control of your money with DayMoney",
+    url: "https://daymoney.com.br/",
+    locale: "en"
+  } : itemEn;
+  let summary = isSecondTestPost
+    ? "Track income, expenses and your budget with a practical personal finance platform."
+    : extractSummary(itemEn);
+  let postTitle = item.title;
   let postSummary = summary;
-  let postUrl = itemEn.url;
+  let postUrl = item.url;
   let isNews = false;
+  if (isSecondTestPost) console.log("[bluesky-publisher] one-time second test post selected: DayMoney.");
   const dayNumber = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
   if (dayNumber % 3 === 0) {
     const news = await fetchWorldNews(state);
@@ -301,7 +314,8 @@ async function main() {
   }, session.accessJwt);
   const nextState = {
     lastPublishedDate: day,
-    locale: "en+pt",
+    dailyPostCount: publishedToday + 1,
+    locale: "en",
     campaign: item.campaign,
     uri: record.uri,
     cid: record.cid,
@@ -314,6 +328,6 @@ async function main() {
   };
   fs.mkdirSync(path.dirname(statePath), { recursive: true });
   fs.writeFileSync(statePath, JSON.stringify(nextState, null, 2) + "\n");
-  console.log("[bluesky-publisher] published " + (isNews ? "news" : "en+pt") + " post: " + record.uri);
+  console.log("[bluesky-publisher] published " + (isNews ? "news" : "en") + " post (" + (publishedToday + 1) + "/" + dailyLimit + " today): " + record.uri);
 }
 main().catch(error => fail(error.message));
