@@ -247,7 +247,8 @@ async function main() {
   await followRelevantActors(session, state, day);
   if (state.lastPublishedDate === day) {
     fs.mkdirSync(path.dirname(statePath), { recursive: true });
-    fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + "\\n");
+    fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n");
+    try { fs.unlinkSync(lockPath); } catch {}
     console.log("[bluesky-publisher] already published today; skipping post.");
     return;
   }
