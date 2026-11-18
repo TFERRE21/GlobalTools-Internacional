@@ -1,11 +1,11 @@
 {
-  "seedIndex": 3,
-  "totalRuns": 33,
-  "lastRunAt": "2026-11-17T21:46:47.314Z",
+  "seedIndex": 4,
+  "totalRuns": 34,
+  "lastRunAt": "2026-11-18T21:27:26.107Z",
   "lastError": null,
-  "lastSeed": "Word to PDF online",
-  "keywordCount": 269,
-  "newKeywordsThisRun": 0,
+  "lastSeed": "PDF to Word converter",
+  "keywordCount": 270,
+  "newKeywordsThisRun": 1,
   "suggestionCount": 10,
   "sitemapUrlCount": 129
 }
